@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model holdings {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  portfolio_id  String     @db.Uuid
+  stock_id      String     @db.Uuid
+  quantity      BigInt
+  average_price Decimal    @db.Decimal(18, 4)
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime   @default(now()) @db.Timestamptz(6)
+  portfolios    portfolios @relation(fields: [portfolio_id], references: [id], onUpdate: NoAction, map: "fk_holding_portfolio")
+  stocks        stocks     @relation(fields: [stock_id], references: [id], onUpdate: NoAction, map: "fk_holding_stock")
+
+  @@unique([portfolio_id, stock_id], map: "uq_portfolio_stock")
+  @@index([portfolio_id], map: "idx_holdings_portfolio")
+  @@index([stock_id], map: "idx_holdings_stock")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model orders {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String        @db.Uuid
+  stock_id        String        @db.Uuid
+  order_type      String        @db.VarChar(10)
+  quantity        BigInt
+  execution_price Decimal?      @db.Decimal(18, 4)
+  total_amount    Decimal?      @db.Decimal(18, 2)
+  status          String        @default("PENDING") @db.VarChar(20)
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
+  stocks          stocks        @relation(fields: [stock_id], references: [id], onUpdate: NoAction, map: "fk_order_stock")
+  users           users         @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_order_user")
+  transactions    transactions?
+
+  @@index([status], map: "idx_orders_status")
+  @@index([stock_id], map: "idx_orders_stock")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_orders_user_created")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model portfolios {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String         @unique @db.Uuid
+  cash_balance Decimal        @default(100000.00) @db.Decimal(18, 2)
+  currency     String         @default("INR") @db.Char(3)
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime       @default(now()) @db.Timestamptz(6)
+  holdings     holdings[]
+  users        users          @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_portfolio_user")
+  transactions transactions[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model stocks {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  symbol           String     @db.VarChar(20)
+  company_name     String     @db.VarChar(150)
+  exchange         String     @default("NSE") @db.VarChar(20)
+  currency         String     @default("INR") @db.Char(3)
+  current_price    Decimal?   @db.Decimal(18, 4)
+  price_updated_at DateTime?  @db.Timestamptz(6)
+  created_at       DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime   @default(now()) @db.Timestamptz(6)
+  holdings         holdings[]
+  orders           orders[]
+
+  @@unique([symbol, exchange], map: "uq_stock_symbol_exchange")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transactions {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  portfolio_id     String     @db.Uuid
+  order_id         String     @unique @db.Uuid
+  transaction_type String     @db.VarChar(20)
+  amount           Decimal    @db.Decimal(18, 2)
+  balance_after    Decimal    @db.Decimal(18, 2)
+  currency         String     @default("INR") @db.Char(3)
+  created_at       DateTime   @default(now()) @db.Timestamptz(6)
+  orders           orders     @relation(fields: [order_id], references: [id], onUpdate: NoAction, map: "fk_transaction_order")
+  portfolios       portfolios @relation(fields: [portfolio_id], references: [id], onUpdate: NoAction, map: "fk_transaction_portfolio")
+
+  @@index([portfolio_id, created_at(sort: Desc)], map: "idx_transactions_portfolio_created")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model users {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String      @db.VarChar(100)
+  email         String      @db.VarChar(255)
+  password_hash String?
+  google_id     String?     @unique @db.VarChar(255)
+  is_active     Boolean     @default(true)
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime    @default(now()) @db.Timestamptz(6)
+  orders        orders[]
+  portfolios    portfolios?
+}
