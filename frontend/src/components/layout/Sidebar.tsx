@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
-  Settings,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -30,7 +29,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Orders", to: "/orders", icon: ClipboardList },
   { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
   { label: "Watchlist", to: "/watchlist", icon: Bookmark },
-  { label: "Settings", to: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
