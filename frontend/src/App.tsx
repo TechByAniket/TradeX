@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/common/Button";
 import { OverviewPage } from "@/pages/OverviewPage";
+import { ExploreStocksPage } from "@/pages/ExploreStocksPage";
 import { ShellRoutePage } from "@/pages/ShellRoutePage";
 
 function NotFoundPage() {
@@ -32,16 +33,7 @@ export function App() {
           <Routes>
             <Route element={<AppShell />}>
               <Route path="/" element={<OverviewPage />} />
-              <Route
-                path="/stocks"
-                element={
-                  <ShellRoutePage
-                    title="Explore Stocks"
-                    description="Search and inspect supported simulated stocks."
-                    milestone="Group 3"
-                  />
-                }
-              />
+              <Route path="/stocks" element={<ExploreStocksPage />} />
               <Route
                 path="/stocks/:symbol"
                 element={
