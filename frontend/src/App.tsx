@@ -17,10 +17,8 @@ import { WatchlistPage } from "@/pages/WatchlistPage";
 function NotFoundPage() {
   return (
     <div className="flex flex-col items-start gap-4 py-12">
-      <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-        Page not found
-      </h1>
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+      <h1 className="tx-heading-page text-xl">Page not found</h1>
+      <p className="text-sm text-[var(--tx-text-secondary)]">
         The requested route does not exist in TradeX.
       </p>
       <Link to="/">

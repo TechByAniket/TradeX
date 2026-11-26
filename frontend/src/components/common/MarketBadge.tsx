@@ -7,10 +7,10 @@ interface MarketBadgeProps {
 }
 
 const STATUS_DOT: Record<SocketConnectionStatus, string> = {
-  live: "bg-emerald-500",
-  connecting: "bg-amber-500",
-  reconnecting: "bg-amber-500",
-  offline: "bg-rose-500",
+  live: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]",
+  connecting: "bg-amber-400",
+  reconnecting: "bg-amber-400",
+  offline: "bg-red-400",
 };
 
 const STATUS_LABEL: Record<SocketConnectionStatus, string> = {
@@ -26,21 +26,21 @@ export function MarketBadge({
 }: MarketBadgeProps) {
   return (
     <span
-      title="Prices are driven by the backend market simulator"
+      title="Prices are driven by the backend market simulator and do not reflect live exchange feeds"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium tracking-wide text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300",
+        "tx-glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-semibold tracking-[0.09em] text-[var(--tx-text-secondary)]",
         className
       )}
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          connectionStatus ? STATUS_DOT[connectionStatus] : "bg-amber-500"
+          "h-1.5 w-1.5 shrink-0 rounded-full",
+          connectionStatus ? STATUS_DOT[connectionStatus] : "bg-emerald-400"
         )}
       />
-      <span>SIMULATED MARKET</span>
+      <span className="text-[var(--tx-text)]">SIMULATED MARKET</span>
       {connectionStatus && (
-        <span className="border-l border-amber-300/70 pl-1.5 font-normal text-amber-700 dark:border-amber-800 dark:text-amber-300/90">
+        <span className="border-l border-[var(--tx-border-strong)] pl-2 font-medium tracking-[0.03em] text-[var(--tx-text-muted)]">
           {STATUS_LABEL[connectionStatus]}
         </span>
       )}
