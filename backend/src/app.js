@@ -4,6 +4,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import marketRoutes from "./routes/marketRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import portfolioRoutes from "./routes/portfolioRoutes.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -15,6 +16,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/portfolio", portfolioRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
