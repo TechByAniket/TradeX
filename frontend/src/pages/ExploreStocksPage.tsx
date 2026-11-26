@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AlertCircle, RefreshCw, Search, X } from "lucide-react";
+import { AlertCircle, ChevronDown, RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Card, CardContent, CardHeader } from "@/components/common/Card";
+import { Input } from "@/components/common/Input";
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useMarket } from "@/context/MarketContext";
 import {
@@ -68,28 +69,36 @@ export function ExploreStocksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end dark:border-slate-800">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
+      <div className="flex flex-col justify-between gap-4 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
+        <div className="space-y-2">
+          <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
+            NSE Simulated Universe · Real-Time Quotes
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="tx-heading-page text-2xl sm:text-[26px]">
               Explore Stocks
             </h1>
             <MarketBadge connectionStatus={connectionStatus} />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Search and sort supported stocks with real-time simulated quotes.
+          <p className="text-[13px] text-[var(--tx-text-secondary)]">
+            Search and rank supported equities driven by the backend market
+            simulator.
           </p>
         </div>
 
-        <p className="text-xs font-medium text-slate-500 tabular-nums dark:text-slate-400">
-          Showing {filteredAndSortedStocks.length} of {stocks.length} stocks
+        <p className="text-xs font-medium tabular-nums text-[var(--tx-text-muted)]">
+          Showing{" "}
+          <span className="text-[var(--tx-text)]">
+            {filteredAndSortedStocks.length}
+          </span>{" "}
+          of {stocks.length} stocks
         </p>
       </div>
 
       {error && (
         <div
           role="alert"
-          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 sm:flex-row sm:items-center dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] px-4 py-3 text-[13px] text-[var(--tx-loss)] sm:flex-row sm:items-center"
         >
           <div className="flex items-center gap-2.5">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -109,52 +118,60 @@ export function ExploreStocksPage() {
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
+        <CardHeader className="flex-col gap-3 border-b border-[var(--tx-border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full sm:max-w-sm">
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Filter by company name or symbol..."
               aria-label="Filter stocks by company name or symbol"
-              className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pr-8 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-900"
+              leftIcon={<Search className="h-3.5 w-3.5" />}
+              rightElement={
+                searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange("")}
+                    aria-label="Clear stock search"
+                    className="cursor-pointer rounded p-0.5 text-[var(--tx-text-muted)] transition-colors hover:text-[var(--tx-text)]"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                ) : undefined
+              }
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => handleSearchChange("")}
-                aria-label="Clear stock search"
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-start">
             <label
               htmlFor="stock-sort"
-              className="text-xs font-medium text-slate-500 dark:text-slate-400"
+              className="tx-label shrink-0"
             >
-              Sort by
+              Sort
             </label>
-            <select
-              id="stock-sort"
-              value={`${sortField}:${sortDirection}`}
-              onChange={(e) => handleSelectSortPreset(e.target.value)}
-              className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
-            >
-              <option value="symbol:asc">Symbol (A–Z)</option>
-              <option value="changePercent:desc">Change % (High to Low)</option>
-              <option value="changePercent:asc">Change % (Low to High)</option>
-              <option value="currentPrice:desc">Price (High to Low)</option>
-              <option value="currentPrice:asc">Price (Low to High)</option>
-            </select>
+            <div className="relative flex-1 sm:flex-none">
+              <select
+                id="stock-sort"
+                value={`${sortField}:${sortDirection}`}
+                onChange={(e) => handleSelectSortPreset(e.target.value)}
+                className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] pr-8 pl-3 text-xs font-medium text-[var(--tx-text)] transition-colors hover:border-[var(--tx-border-hover)] focus:border-[var(--tx-border-hover)] focus:bg-[var(--tx-surface-elevated)] focus:outline-none sm:w-auto"
+              >
+                <option value="symbol:asc">Symbol (A–Z)</option>
+                <option value="changePercent:desc">
+                  Change % (High to Low)
+                </option>
+                <option value="changePercent:asc">
+                  Change % (Low to High)
+                </option>
+                <option value="currentPrice:desc">Price (High to Low)</option>
+                <option value="currentPrice:asc">Price (Low to High)</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[var(--tx-text-muted)]" />
+            </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 sm:px-0">
           <ExploreStocksTable
             stocks={filteredAndSortedStocks}
             loading={loading}

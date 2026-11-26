@@ -30,17 +30,21 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* A. Welcome section + E. Quick actions */}
-      <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end dark:border-slate-800">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
-              {user ? `Welcome back, ${user.name}` : "Welcome to TradeX"}
+      {/* Welcome header & primary actions */}
+      <div className="flex flex-col justify-between gap-5 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
+        <div className="space-y-2">
+          <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
+            {formatTodayDate()} · NSE Simulated Desk
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="tx-heading-page text-2xl sm:text-[26px]">
+              {user ? `Welcome back, ${user.name}` : "TradeX Market Desk"}
             </h1>
             <MarketBadge connectionStatus={connectionStatus} />
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {formatTodayDate()} · Live simulated NSE market overview
+          <p className="max-w-2xl text-[13px] leading-relaxed text-[var(--tx-text-secondary)]">
+            Real-time simulated NSE equity quotes and virtual INR order
+            execution backed by live Socket.IO updates.
           </p>
         </div>
 
@@ -52,7 +56,7 @@ export function OverviewPage() {
             </Button>
           </Link>
           <Link to="/portfolio">
-            <Button variant="outline" size="md">
+            <Button variant="secondary" size="md">
               <Briefcase className="h-4 w-4" />
               View Portfolio
             </Button>
@@ -64,7 +68,7 @@ export function OverviewPage() {
       {error && (
         <div
           role="alert"
-          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 sm:flex-row sm:items-center dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] px-4 py-3 text-[13px] text-[var(--tx-loss)] sm:flex-row sm:items-center"
         >
           <div className="flex items-center gap-2.5">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -83,7 +87,7 @@ export function OverviewPage() {
         </div>
       )}
 
-      {/* B. Compact Market Overview */}
+      {/* Market summary cards */}
       <MarketSummaryCards
         stocks={stocks}
         loading={loading}
@@ -91,12 +95,12 @@ export function OverviewPage() {
         connectionStatus={connectionStatus}
       />
 
-      {/* C. Stock Watchlist Preview + D. Market Movers */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {/* Market watchlist preview & market movers */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
           <WatchlistPreviewTable stocks={stocks} loading={loading} />
         </div>
-        <div>
+        <div className="lg:col-span-4">
           <MarketMoversCard stocks={stocks} loading={loading} />
         </div>
       </div>

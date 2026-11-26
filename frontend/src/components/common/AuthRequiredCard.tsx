@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { Input } from "@/components/common/Input";
 import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage, setStoredToken } from "@/services/apiClient";
 import { loginUser } from "@/services/authService";
@@ -50,59 +51,41 @@ export function AuthRequiredCard({
   };
 
   return (
-    <div className="mx-auto max-w-md py-6">
-      <Card>
+    <div className="mx-auto max-w-md py-8">
+      <Card variant="elevated">
         <CardHeader>
-          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-            <Lock className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Authentication Required
-            </span>
+          <div className="flex items-center gap-2 text-[var(--tx-text-secondary)]">
+            <Lock className="h-3.5 w-3.5" />
+            <span className="tx-label">Authentication Required</span>
           </div>
-          <CardTitle className="pt-1">{title}</CardTitle>
+          <CardTitle className="pt-1.5 text-base">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="auth-gate-email"
-                className="block text-xs font-medium text-slate-600 dark:text-slate-300"
-              >
-                Email
-              </label>
-              <input
-                id="auth-gate-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-              />
-            </div>
+            <Input
+              id="auth-gate-email"
+              label="Email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
 
-            <div>
-              <label
-                htmlFor="auth-gate-password"
-                className="block text-xs font-medium text-slate-600 dark:text-slate-300"
-              >
-                Password
-              </label>
-              <input
-                id="auth-gate-password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-              />
-            </div>
+            <Input
+              id="auth-gate-password"
+              label="Password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+            />
 
             {error && (
-              <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+              <p className="text-xs font-medium text-[var(--tx-loss)]">
                 {error}
               </p>
             )}
@@ -116,18 +99,18 @@ export function AuthRequiredCard({
               {loading ? "Signing in..." : "Sign in"}
             </Button>
 
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-center text-xs text-[var(--tx-text-muted)]">
               Need an account or Google Sign-In?{" "}
               <Link
                 to="/register"
-                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                className="font-medium text-[var(--tx-text)] underline decoration-[var(--tx-border-hover)] underline-offset-4 transition-colors hover:opacity-80"
               >
                 Register
               </Link>{" "}
               or{" "}
               <Link
                 to="/login"
-                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                className="font-medium text-[var(--tx-text)] underline decoration-[var(--tx-border-hover)] underline-offset-4 transition-colors hover:opacity-80"
               >
                 Use Google SSO
               </Link>

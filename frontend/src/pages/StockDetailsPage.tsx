@@ -7,6 +7,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import {
   Card,
@@ -14,11 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useMarket } from "@/context/MarketContext";
 import { StockPriceChart } from "@/features/stocks/StockPriceChart";
 import { OrderTicket } from "@/features/trading/OrderTicket";
-import { cn, formatINR, formatNumber, formatPercent } from "@/lib/utils";
+import { formatINR, formatNumber, formatPercent } from "@/lib/utils";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { fetchStockBySymbol, fetchStockHistory } from "@/services/marketService";
 import type { MarketStock, StockHistoryPoint } from "@/types/market";
@@ -151,9 +153,17 @@ export function StockDetailsPage() {
   if (stockLoading && !stock) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-44 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-        <div className="h-28 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-72 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-6 w-36 animate-pulse rounded-md bg-[var(--tx-surface-elevated)]" />
+        <div className="h-32 w-full animate-pulse rounded-xl bg-[var(--tx-surface-elevated)]" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="h-24 animate-pulse rounded-xl bg-[var(--tx-surface-elevated)]"
+            />
+          ))}
+        </div>
+        <div className="h-80 w-full animate-pulse rounded-xl bg-[var(--tx-surface-elevated)]" />
       </div>
     );
   }
@@ -163,19 +173,19 @@ export function StockDetailsPage() {
       <div className="space-y-4">
         <Link
           to="/stocks"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--tx-text-secondary)] transition-colors hover:text-[var(--tx-text)]"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Back to Explore Stocks
         </Link>
 
-        <Card>
+        <Card variant="elevated">
           <CardContent className="flex flex-col items-start gap-4 pt-6">
-            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+            <div className="flex items-center gap-2 text-[var(--tx-loss)]">
               <AlertCircle className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Stock unavailable</h1>
+              <h1 className="tx-heading-section text-lg">Stock unavailable</h1>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <p className="text-[13px] text-[var(--tx-text-secondary)]">
               {stockError}
             </p>
             <Link to="/stocks">
@@ -198,125 +208,67 @@ export function StockDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <Link
           to="/stocks"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--tx-text-secondary)] transition-colors hover:text-[var(--tx-text)]"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Explore Stocks
         </Link>
         <MarketBadge connectionStatus={connectionStatus} />
       </div>
 
       {/* Price Header */}
-      <Card>
-        <CardContent className="flex flex-col justify-between gap-4 pt-6 sm:flex-row sm:items-end">
-          <div className="space-y-1.5">
+      <Card variant="elevated">
+        <CardContent className="flex flex-col justify-between gap-5 pt-6 sm:flex-row sm:items-end">
+          <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-                {stock.companyName}
-              </h1>
-              <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                {stock.symbol}
+              <Badge variant="neutral" size="md">
+                {stock.symbol} · {stock.exchange}
+              </Badge>
+              <span className="text-xs text-[var(--tx-text-muted)]">
+                {stock.currency}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {stock.exchange} · {stock.currency} · Last updated{" "}
-              <span className="tabular-nums">
+            <h1 className="tx-heading-page text-2xl sm:text-[28px]">
+              {stock.companyName}
+            </h1>
+            <p className="text-xs text-[var(--tx-text-muted)]">
+              Last quote update{" "}
+              <span className="tabular-nums text-[var(--tx-text-secondary)]">
                 {formatLastUpdated(stock.lastUpdated)}
               </span>
             </p>
           </div>
 
-          <div className="sm:text-right">
-            <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-slate-50">
-              {formatINR(stock.currentPrice)}
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <p className="text-3xl font-bold tracking-[-0.03em] tabular-nums text-[var(--tx-text)] sm:text-[34px]">
+              <LivePriceText price={stock.currentPrice} />
             </p>
-            <div className="mt-1 inline-flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 text-sm font-semibold tabular-nums",
-                  isUp
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : isDown
-                      ? "text-rose-600 dark:text-rose-400"
-                      : "text-slate-500 dark:text-slate-400"
-                )}
-              >
-                {isUp ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : isDown ? (
-                  <TrendingDown className="h-4 w-4" />
-                ) : (
-                  <Minus className="h-4 w-4" />
-                )}
+            <Badge
+              variant={isUp ? "gain" : isDown ? "loss" : "neutral"}
+              size="md"
+            >
+              {isUp ? (
+                <TrendingUp className="h-3.5 w-3.5" />
+              ) : isDown ? (
+                <TrendingDown className="h-3.5 w-3.5" />
+              ) : (
+                <Minus className="h-3.5 w-3.5" />
+              )}
+              <span>
                 {isUp ? "+" : ""}
                 {formatINR(stock.change)} ({formatPercent(stock.changePercent)})
               </span>
-            </div>
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Supported Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Previous Close
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-              {formatINR(stock.previousClose)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Day High
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-              {formatINR(stock.dayHigh)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Day Low
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-              {formatINR(stock.dayLow)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Volume
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-              {formatNumber(stock.volume)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Price Chart + Trading Panel */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
           <StockPriceChart
             symbol={stock.symbol}
             history={history}
@@ -325,9 +277,56 @@ export function StockDetailsPage() {
             error={historyError}
           />
         </div>
-        <div>
+        <div className="lg:col-span-4">
           <OrderTicket stock={stock} initialSide={initialSide} />
         </div>
+      </div>
+
+      {/* Supported Metrics Grid */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Card interactive>
+          <CardHeader className="pb-1">
+            <CardTitle className="tx-label">Previous Close</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-[var(--tx-text)]">
+              {formatINR(stock.previousClose)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card interactive>
+          <CardHeader className="pb-1">
+            <CardTitle className="tx-label">Day High</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-[var(--tx-gain)]">
+              {formatINR(stock.dayHigh)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card interactive>
+          <CardHeader className="pb-1">
+            <CardTitle className="tx-label">Day Low</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-[var(--tx-loss)]">
+              {formatINR(stock.dayLow)}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card interactive>
+          <CardHeader className="pb-1">
+            <CardTitle className="tx-label">Session Volume</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg font-semibold tabular-nums text-[var(--tx-text)]">
+              {formatNumber(stock.volume)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

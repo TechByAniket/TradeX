@@ -7,6 +7,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Activity } from "lucide-react";
+import { Badge } from "@/components/common/Badge";
 import {
   Card,
   CardContent,
@@ -65,11 +67,11 @@ function ChartTooltip({ active, payload }: CustomTooltipProps) {
 
   const point = payload[0].payload;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+    <div className="tx-glass-strong rounded-lg px-3.5 py-2.5 text-xs">
+      <p className="text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
         {formatINR(point.price)}
       </p>
-      <p className="mt-0.5 text-slate-500 tabular-nums dark:text-slate-400">
+      <p className="mt-0.5 text-[11px] tabular-nums text-[var(--tx-text-muted)]">
         {formatFullTimestamp(point.timestamp)}
       </p>
     </div>
@@ -88,74 +90,104 @@ export function StockPriceChart({
     timeLabel: formatShortTime(point.timestamp),
   }));
 
-  const strokeColor = isPositive ? "#059669" : "#dc2626";
+  const strokeColor = isPositive ? "#34d399" : "#f87171";
   const gradientId = `stockPriceGrad-${symbol}-${isPositive ? "up" : "down"}`;
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+    <Card className="overflow-hidden">
+      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-[var(--tx-border)] pb-4">
         <div>
-          <CardTitle>Simulated Intraday Price Chart</CardTitle>
+          <CardTitle className="tx-heading-section">
+            Simulated Intraday Chart
+          </CardTitle>
           <CardDescription>
             {history.length > 0
-              ? `Showing ${history.length} recorded price ${history.length === 1 ? "point" : "points"} for ${symbol}`
+              ? `Recorded simulator tick history for ${symbol}`
               : `Session price history for ${symbol}`}
           </CardDescription>
         </div>
+        {history.length > 0 && (
+          <Badge variant="glass" size="sm">
+            {history.length} {history.length === 1 ? "pt" : "pts"}
+          </Badge>
+        )}
       </CardHeader>
 
       <CardContent className="pt-5">
         {loading && history.length === 0 ? (
-          <div className="h-72 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70" />
+          <div className="h-80 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]" />
         ) : error && history.length === 0 ? (
-          <div className="flex h-72 items-center justify-center rounded-lg border border-dashed border-slate-200 px-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            Historical price data is currently unavailable ({error}).
+          <div className="flex h-80 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--tx-border-strong)] bg-[var(--tx-bg)]/50 px-6 text-center">
+            <Activity className="h-5 w-5 text-[var(--tx-text-muted)]" />
+            <p className="text-[13px] text-[var(--tx-text-secondary)]">
+              Historical price data is currently unavailable ({error}).
+            </p>
           </div>
         ) : history.length === 0 ? (
-          <div className="flex h-72 items-center justify-center rounded-lg border border-dashed border-slate-200 px-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            Historical price data is unavailable right now. Live quote metrics
-            remain active above.
+          <div className="flex h-80 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--tx-border-strong)] bg-[var(--tx-bg)]/50 px-6 text-center">
+            <Activity className="h-5 w-5 text-[var(--tx-text-muted)]" />
+            <p className="max-w-sm text-[13px] leading-relaxed text-[var(--tx-text-secondary)]">
+              Historical price data is unavailable right now. Live quote metrics
+              remain active above.
+            </p>
           </div>
         ) : (
-          <div className="h-72 w-full">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
-                margin={{ top: 8, right: 12, left: 4, bottom: 0 }}
+                margin={{ top: 10, right: 12, left: 2, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={strokeColor} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
+                    <stop
+                      offset="0%"
+                      stopColor={strokeColor}
+                      stopOpacity={0.22}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={strokeColor}
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#94a3b8"
-                  strokeOpacity={0.2}
+                  stroke="var(--tx-text)"
+                  strokeOpacity={0.07}
                 />
                 <XAxis
                   dataKey="timeLabel"
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "var(--tx-text-muted)" }}
                   tickLine={false}
                   axisLine={false}
-                  minTickGap={28}
+                  minTickGap={32}
                 />
                 <YAxis
                   domain={["auto", "auto"]}
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "var(--tx-text-muted)" }}
                   tickLine={false}
                   axisLine={false}
-                  width={72}
+                  width={74}
                   tickFormatter={(val: number) => `₹${val.toFixed(0)}`}
                 />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip
+                  cursor={{ stroke: "var(--tx-border-hover)", strokeWidth: 1 }}
+                  content={<ChartTooltip />}
+                />
                 <Area
                   type="monotone"
                   dataKey="price"
                   stroke={strokeColor}
                   strokeWidth={2}
+                  activeDot={{
+                    r: 4,
+                    fill: strokeColor,
+                    stroke: "var(--tx-bg)",
+                    strokeWidth: 2,
+                  }}
                   fill={`url(#${gradientId})`}
                   isAnimationActive={false}
                 />

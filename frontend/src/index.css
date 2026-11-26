@@ -2,43 +2,219 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+}
+
 :root {
-  --tx-bg: #f8fafc;
+  --tx-bg: #f5f5f6;
+  --tx-workspace: #fafafa;
   --tx-surface: #ffffff;
-  --tx-surface-muted: #f1f5f9;
-  --tx-border: #e2e8f0;
-  --tx-text: #0f172a;
-  --tx-text-muted: #64748b;
-  --tx-primary: #4f46e5;
-  --tx-primary-hover: #4338ca;
+  --tx-surface-muted: #f1f2f4;
+  --tx-surface-elevated: #e9ebee;
+  --tx-surface-hover: #f3f4f6;
+  --tx-glass: rgba(255, 255, 255, 0.76);
+  --tx-glass-strong: rgba(255, 255, 255, 0.88);
+  --tx-border: rgba(11, 12, 14, 0.08);
+  --tx-border-strong: rgba(11, 12, 14, 0.13);
+  --tx-border-hover: rgba(11, 12, 14, 0.2);
+  --tx-text: #0b0c0e;
+  --tx-text-secondary: #4e545f;
+  --tx-text-muted: #747b86;
+  --tx-primary: #111317;
+  --tx-primary-hover: #242830;
+  --tx-primary-fg: #f5f5f5;
   --tx-gain: #059669;
+  --tx-gain-strong: #047857;
+  --tx-gain-bg: rgba(5, 150, 105, 0.09);
+  --tx-gain-border: rgba(5, 150, 105, 0.22);
   --tx-loss: #dc2626;
+  --tx-loss-strong: #b91c1c;
+  --tx-loss-bg: rgba(220, 38, 38, 0.08);
+  --tx-loss-border: rgba(220, 38, 38, 0.2);
+  --tx-warning: #d97706;
+  --tx-warning-bg: rgba(217, 119, 6, 0.09);
+  --tx-warning-border: rgba(217, 119, 6, 0.22);
+  --tx-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --tx-shadow-elevated: 0 10px 25px -8px rgba(0, 0, 0, 0.1);
+  --tx-shadow-glass: 0 16px 36px -12px rgba(0, 0, 0, 0.14);
 }
 
 .dark {
-  --tx-bg: #0b1120;
-  --tx-surface: #111827;
-  --tx-surface-muted: #1e293b;
-  --tx-border: #1f2937;
-  --tx-text: #f8fafc;
-  --tx-text-muted: #94a3b8;
-  --tx-primary: #6366f1;
-  --tx-primary-hover: #4f46e5;
-  --tx-gain: #10b981;
+  --tx-bg: #050505;
+  --tx-workspace: #08090b;
+  --tx-surface: #0d0f12;
+  --tx-surface-muted: #111317;
+  --tx-surface-elevated: #12151a;
+  --tx-surface-hover: #171b21;
+  --tx-glass: rgba(255, 255, 255, 0.035);
+  --tx-glass-strong: rgba(18, 21, 26, 0.78);
+  --tx-border: rgba(255, 255, 255, 0.07);
+  --tx-border-strong: rgba(255, 255, 255, 0.11);
+  --tx-border-hover: rgba(255, 255, 255, 0.16);
+  --tx-text: #f5f5f5;
+  --tx-text-secondary: #a0a5ae;
+  --tx-text-muted: #707782;
+  --tx-primary: #f5f5f5;
+  --tx-primary-hover: #e2e4e8;
+  --tx-primary-fg: #08090b;
+  --tx-gain: #34d399;
+  --tx-gain-strong: #10b981;
+  --tx-gain-bg: rgba(16, 185, 129, 0.1);
+  --tx-gain-border: rgba(16, 185, 129, 0.24);
   --tx-loss: #f87171;
+  --tx-loss-strong: #ef4444;
+  --tx-loss-bg: rgba(239, 68, 68, 0.1);
+  --tx-loss-border: rgba(239, 68, 68, 0.24);
+  --tx-warning: #fbbf24;
+  --tx-warning-bg: rgba(245, 158, 11, 0.1);
+  --tx-warning-border: rgba(245, 158, 11, 0.24);
+  --tx-shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --tx-shadow-elevated:
+    0 10px 30px -10px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --tx-shadow-glass:
+    0 16px 40px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
-  body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      sans-serif;
+  html {
+    font-family: var(--font-sans);
     background-color: var(--tx-bg);
     color: var(--tx-text);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--tx-workspace);
+    color: var(--tx-text);
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: var(--tx-text);
   }
 }
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Matte & selective glass surface primitives */
+.tx-surface {
+  background-color: var(--tx-surface);
+  border: 1px solid var(--tx-border);
+  box-shadow: var(--tx-shadow-card);
+}
+
+.tx-surface-elevated {
+  background-color: var(--tx-surface-elevated);
+  border: 1px solid var(--tx-border-strong);
+  box-shadow: var(--tx-shadow-elevated);
+}
+
+.tx-glass {
+  background-color: var(--tx-glass);
+  border: 1px solid var(--tx-border-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--tx-shadow-card);
+}
+
+.tx-glass-strong {
+  background-color: var(--tx-glass-strong);
+  border: 1px solid var(--tx-border-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--tx-shadow-glass);
+}
+
+/* Typographic hierarchy helpers */
+.tx-heading-page {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--tx-text);
+}
+
+.tx-heading-section {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--tx-text);
+}
+
+.tx-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tx-text-muted);
+}
+
+/* Restrained scrollbar for fixed-height financial tables */
+.tx-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tx-border-strong) transparent;
+}
+
+.tx-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tx-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tx-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--tx-border-strong);
+  border-radius: 9999px;
+}
+
+.tx-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--tx-border-hover);
+}
+
+/* Brief live price update feedback */
+@keyframes tx-flash-gain {
+  0% {
+    background-color: rgba(16, 185, 129, 0.18);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes tx-flash-loss {
+  0% {
+    background-color: rgba(239, 68, 68, 0.18);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.tx-flash-gain {
+  animation: tx-flash-gain 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tx-flash-loss {
+  animation: tx-flash-loss 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-flash-gain,
+  .tx-flash-loss {
+    animation: none;
+  }
 }

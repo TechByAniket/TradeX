@@ -5,10 +5,13 @@ import {
   ArrowUpDown,
   Eye,
   Minus,
+  SearchX,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { cn, formatINR, formatNumber, formatPercent } from "@/lib/utils";
 import type { MarketStock } from "@/types/market";
 
@@ -35,12 +38,12 @@ function SortIcon({
   direction: SortDirection;
 }) {
   if (field !== activeField) {
-    return <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />;
+    return <ArrowUpDown className="h-3 w-3 text-[var(--tx-text-muted)]" />;
   }
   return direction === "asc" ? (
-    <ArrowUp className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+    <ArrowUp className="h-3 w-3 text-[var(--tx-text)]" />
   ) : (
-    <ArrowDown className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+    <ArrowDown className="h-3 w-3 text-[var(--tx-text)]" />
   );
 }
 
@@ -55,11 +58,11 @@ export function ExploreStocksTable({
 }: ExploreStocksTableProps) {
   if (loading && stocks.length === 0) {
     return (
-      <div className="space-y-3 p-6">
+      <div className="space-y-2.5 p-5 sm:p-6">
         {Array.from({ length: 8 }).map((_, idx) => (
           <div
             key={idx}
-            className="h-11 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70"
+            className="h-11 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]"
           />
         ))}
       </div>
@@ -68,15 +71,18 @@ export function ExploreStocksTable({
 
   if (stocks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--tx-border)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text-muted)]">
+          <SearchX className="h-4 w-4" />
+        </span>
+        <p className="text-[13px] text-[var(--tx-text-secondary)]">
           {hasActiveSearch
-            ? "No simulated stocks match your search query."
+            ? "No simulated stocks match your filter criteria."
             : "No simulated stocks are currently available."}
         </p>
         {hasActiveSearch && (
-          <Button variant="outline" size="sm" onClick={onClearSearch}>
-            Clear search
+          <Button variant="secondary" size="sm" onClick={onClearSearch}>
+            Clear filter
           </Button>
         )}
       </div>
@@ -84,16 +90,16 @@ export function ExploreStocksTable({
   }
 
   return (
-    <div className="max-h-[480px] overflow-auto">
-      <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-        <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+    <div className="max-h-[520px] overflow-auto tx-scrollbar">
+      <table className="w-full min-w-[780px] border-collapse text-left">
+        <thead className="sticky top-0 z-10 border-b border-[var(--tx-border)] bg-[var(--tx-surface-muted)]/95 backdrop-blur-xs">
           <tr>
-            <th className="px-6 py-3.5">Company</th>
-            <th className="px-4 py-3.5">
+            <th className="tx-label px-5 py-3.5 sm:px-6">Company</th>
+            <th className="tx-label px-4 py-3.5">
               <button
                 type="button"
                 onClick={() => onSortChange("symbol")}
-                className="inline-flex items-center gap-1.5 uppercase hover:text-slate-900 dark:hover:text-slate-100"
+                className="inline-flex cursor-pointer items-center gap-1.5 uppercase transition-colors hover:text-[var(--tx-text)]"
               >
                 Symbol
                 <SortIcon
@@ -103,11 +109,11 @@ export function ExploreStocksTable({
                 />
               </button>
             </th>
-            <th className="px-4 py-3.5 text-right">
+            <th className="tx-label px-4 py-3.5 text-right">
               <button
                 type="button"
                 onClick={() => onSortChange("currentPrice")}
-                className="inline-flex items-center justify-end gap-1.5 uppercase hover:text-slate-900 dark:hover:text-slate-100"
+                className="inline-flex cursor-pointer items-center justify-end gap-1.5 uppercase transition-colors hover:text-[var(--tx-text)]"
               >
                 Price
                 <SortIcon
@@ -117,12 +123,12 @@ export function ExploreStocksTable({
                 />
               </button>
             </th>
-            <th className="px-4 py-3.5 text-right">Change</th>
-            <th className="px-4 py-3.5 text-right">
+            <th className="tx-label px-4 py-3.5 text-right">Change</th>
+            <th className="tx-label px-4 py-3.5 text-right">
               <button
                 type="button"
                 onClick={() => onSortChange("changePercent")}
-                className="inline-flex items-center justify-end gap-1.5 uppercase hover:text-slate-900 dark:hover:text-slate-100"
+                className="inline-flex cursor-pointer items-center justify-end gap-1.5 uppercase transition-colors hover:text-[var(--tx-text)]"
               >
                 Change %
                 <SortIcon
@@ -132,12 +138,12 @@ export function ExploreStocksTable({
                 />
               </button>
             </th>
-            <th className="px-4 py-3.5 text-right">Volume</th>
-            <th className="px-6 py-3.5 text-right">Actions</th>
+            <th className="tx-label px-4 py-3.5 text-right">Volume</th>
+            <th className="tx-label px-5 py-3.5 text-right sm:px-6">Actions</th>
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+        <tbody className="divide-y divide-[var(--tx-border)]">
           {stocks.map((stock) => {
             const isUp = stock.change > 0;
             const isDown = stock.change < 0;
@@ -145,12 +151,12 @@ export function ExploreStocksTable({
             return (
               <tr
                 key={stock.id}
-                className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                className="group transition-colors duration-150 hover:bg-[var(--tx-surface-hover)]"
               >
-                <td className="px-6 py-3.5 font-medium text-slate-900 dark:text-slate-100">
+                <td className="px-5 py-3.5 sm:px-6">
                   <Link
                     to={`/stocks/${stock.symbol}`}
-                    className="hover:text-indigo-600 dark:hover:text-indigo-400"
+                    className="block truncate text-[13px] font-medium text-[var(--tx-text)] transition-opacity group-hover:opacity-90"
                   >
                     {stock.companyName}
                   </Link>
@@ -158,37 +164,31 @@ export function ExploreStocksTable({
                 <td className="px-4 py-3.5">
                   <Link
                     to={`/stocks/${stock.symbol}`}
-                    className="inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold tracking-wide text-slate-700 hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    className="text-xs font-semibold tracking-[0.06em] text-[var(--tx-text-secondary)] transition-colors hover:text-[var(--tx-text)]"
                   >
                     {stock.symbol}
                   </Link>
                 </td>
-                <td className="px-4 py-3.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-                  {formatINR(stock.currentPrice)}
+                <td className="px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
+                  <LivePriceText price={stock.currentPrice} />
                 </td>
                 <td
                   className={cn(
-                    "px-4 py-3.5 text-right font-medium tabular-nums",
+                    "px-4 py-3.5 text-right text-[13px] font-medium tabular-nums",
                     isUp
-                      ? "text-emerald-600 dark:text-emerald-400"
+                      ? "text-[var(--tx-gain)]"
                       : isDown
-                        ? "text-rose-600 dark:text-rose-400"
-                        : "text-slate-500 dark:text-slate-400"
+                        ? "text-[var(--tx-loss)]"
+                        : "text-[var(--tx-text-muted)]"
                   )}
                 >
                   {isUp ? "+" : ""}
                   {formatINR(stock.change)}
                 </td>
                 <td className="px-4 py-3.5 text-right">
-                  <span
-                    className={cn(
-                      "inline-flex items-center justify-end gap-1 rounded-md px-2 py-0.5 text-xs font-medium tabular-nums",
-                      isUp
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : isDown
-                          ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                    )}
+                  <Badge
+                    variant={isUp ? "gain" : isDown ? "loss" : "neutral"}
+                    size="sm"
                   >
                     {isUp ? (
                       <TrendingUp className="h-3 w-3" />
@@ -198,21 +198,21 @@ export function ExploreStocksTable({
                       <Minus className="h-3 w-3" />
                     )}
                     {formatPercent(stock.changePercent)}
-                  </span>
+                  </Badge>
                 </td>
-                <td className="px-4 py-3.5 text-right text-slate-600 tabular-nums dark:text-slate-300">
+                <td className="px-4 py-3.5 text-right text-[13px] tabular-nums text-[var(--tx-text-secondary)]">
                   {formatNumber(stock.volume)}
                 </td>
-                <td className="px-6 py-3.5 text-right">
-                  <div className="inline-flex items-center justify-end gap-2">
+                <td className="px-5 py-3.5 text-right sm:px-6">
+                  <div className="inline-flex items-center justify-end gap-1.5">
                     <Link to={`/stocks/${stock.symbol}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="h-7 px-2.5 text-[11px]">
                         <Eye className="h-3.5 w-3.5" />
                         View
                       </Button>
                     </Link>
                     <Link to={`/stocks/${stock.symbol}?action=buy`}>
-                      <Button variant="primary" size="sm">
+                      <Button variant="primary" size="sm" className="h-7 px-2.5 text-[11px]">
                         BUY
                       </Button>
                     </Link>

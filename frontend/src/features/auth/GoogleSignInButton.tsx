@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/context/ThemeContext";
 import { ENV } from "@/lib/env";
 
 interface GoogleCredentialResponse {
@@ -42,6 +43,7 @@ export function GoogleSignInButton({
   onCredential,
   text = "continue_with",
 }: GoogleSignInButtonProps) {
+  const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const callbackRef = useRef(onCredential);
   const [scriptError, setScriptError] = useState(false);
@@ -69,10 +71,14 @@ export function GoogleSignInButton({
           }
         },
       });
+      const availableWidth = containerRef.current.clientWidth;
+      const buttonWidth =
+        availableWidth > 0 ? Math.min(340, Math.max(220, availableWidth)) : 320;
+
       window.google.accounts.id.renderButton(containerRef.current, {
-        theme: "outline",
+        theme: theme === "dark" ? "filled_black" : "outline",
         size: "large",
-        width: 340,
+        width: buttonWidth,
         text,
       });
     };
@@ -110,20 +116,27 @@ export function GoogleSignInButton({
       script?.removeEventListener("load", handleLoad);
       script?.removeEventListener("error", handleError);
     };
-  }, [text]);
+  }, [text, theme]);
 
   if (!ENV.googleClientId) {
     return (
-      <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        Google Sign-In requires <code className="font-mono">VITE_GOOGLE_CLIENT_ID</code> in{" "}
-        <code className="font-mono">frontend/.env</code>.
+      <p className="rounded-lg border border-dashed border-[var(--tx-border-strong)] bg-[var(--tx-bg)]/40 px-3 py-2.5 text-center text-xs text-[var(--tx-text-muted)]">
+        Google Sign-In requires{" "}
+        <code className="font-mono text-[var(--tx-text-secondary)]">
+          VITE_GOOGLE_CLIENT_ID
+        </code>{" "}
+        in{" "}
+        <code className="font-mono text-[var(--tx-text-secondary)]">
+          frontend/.env
+        </code>
+        .
       </p>
     );
   }
 
   if (scriptError) {
     return (
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-center text-xs text-[var(--tx-text-muted)]">
         Unable to load Google Sign-In script. Use email and password above.
       </p>
     );

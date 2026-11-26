@@ -17,6 +17,7 @@ export default defineConfig({
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "charts-vendor": ["recharts"],
           "network-vendor": ["axios", "socket.io-client"],
+          "motion-vendor": ["motion"],
         },
       },
     },

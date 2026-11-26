@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { motion } from "motion/react";
+import {
+  AlertCircle,
+  ChevronDown,
+  ClipboardList,
+  RefreshCw,
+} from "lucide-react";
 import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
+import { Badge, type BadgeVariant } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import {
   Card,
@@ -24,15 +31,11 @@ const STATUS_TABS: StatusFilter[] = [
   "CANCELLED",
 ];
 
-const STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
-  EXECUTED:
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
-  PENDING:
-    "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
-  REJECTED:
-    "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
-  CANCELLED:
-    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+const STATUS_BADGE_VARIANT: Record<OrderStatus, BadgeVariant> = {
+  EXECUTED: "gain",
+  PENDING: "warning",
+  REJECTED: "loss",
+  CANCELLED: "neutral",
 };
 
 function formatDateTime(iso: string): string {
@@ -85,8 +88,8 @@ export function OrdersPage() {
   if (authLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-        <div className="h-64 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-8 w-40 animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]" />
+        <div className="h-64 w-full animate-pulse rounded-xl bg-[var(--tx-surface-elevated)]" />
       </div>
     );
   }
@@ -102,33 +105,37 @@ export function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end dark:border-slate-800">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
-            Orders
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Complete history of your simulated BUY and SELL orders.
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--tx-border)] pb-6 sm:items-end">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
+            Execution Blotter · Simulated Orders
+          </p>
+          <h1 className="tx-heading-page text-2xl sm:text-[26px]">Orders</h1>
+          <p className="text-[13px] text-[var(--tx-text-secondary)]">
+            Complete ledger of your simulated BUY and SELL executions.
           </p>
         </div>
 
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
+          aria-label="Refresh orders"
+          title="Refresh"
           onClick={() => {
             void loadOrders();
           }}
           disabled={loading}
+          className="w-8 shrink-0 px-0 sm:w-auto sm:px-3"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
       {error && (
         <div
           role="alert"
-          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 sm:flex-row sm:items-center dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] px-4 py-3 text-[13px] text-[var(--tx-loss)] sm:flex-row sm:items-center"
         >
           <div className="flex items-center gap-2.5">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -141,13 +148,38 @@ export function OrdersPage() {
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-slate-200 pb-4 dark:border-slate-800">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <CardHeader className="border-b border-[var(--tx-border)] pb-4">
+          {/* Mobile status filter dropdown */}
+          <div className="relative sm:hidden">
+            <select
+              aria-label="Filter orders by status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] pr-8 pl-3 text-xs font-medium tabular-nums text-[var(--tx-text)] transition-colors focus:border-[var(--tx-border-hover)] focus:bg-[var(--tx-surface-elevated)] focus:outline-none"
+            >
+              {STATUS_TABS.map((status) => {
+                const count =
+                  status === "ALL"
+                    ? orders.length
+                    : orders.filter((o) => o.status === status).length;
+                return (
+                  <option key={status} value={status}>
+                    {status} ({count})
+                  </option>
+                );
+              })}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[var(--tx-text-muted)]" />
+          </div>
+
+          {/* Tablet/Desktop segmented filter tabs */}
+          <div className="hidden w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1 sm:inline-flex">
             {STATUS_TABS.map((status) => {
               const count =
                 status === "ALL"
                   ? orders.length
                   : orders.filter((o) => o.status === status).length;
+              const isActive = statusFilter === status;
 
               return (
                 <button
@@ -155,99 +187,129 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                    statusFilter === status
-                      ? "bg-indigo-600 text-white dark:bg-indigo-500"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    "relative cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium tabular-nums transition-colors duration-150",
+                    isActive
+                      ? "text-[var(--tx-text)]"
+                      : "text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
                   )}
                 >
-                  {status} ({count})
+                  {isActive && (
+                    <motion.span
+                      layoutId="orders-status-pill"
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 38,
+                      }}
+                      className="absolute inset-0 rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] shadow-2xs"
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {status}{" "}
+                    <span
+                      className={cn(
+                        "ml-0.5 text-[11px]",
+                        isActive
+                          ? "text-[var(--tx-text-secondary)]"
+                          : "text-[var(--tx-text-muted)]"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </span>
                 </button>
               );
             })}
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 sm:px-0">
           {loading && orders.length === 0 ? (
-            <div className="space-y-3 p-6">
+            <div className="space-y-2.5 p-5 sm:p-6">
               {Array.from({ length: 5 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="h-10 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70"
+                  className="h-10 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]"
                 />
               ))}
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
-              {orders.length === 0
-                ? "No orders have been placed yet."
-                : `No ${statusFilter.toLowerCase()} orders found.`}
+            <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-14 text-center">
+              <ClipboardList className="h-5 w-5 text-[var(--tx-text-muted)]" />
+              <p className="text-[13px] text-[var(--tx-text-secondary)]">
+                {orders.length === 0
+                  ? "No orders have been placed yet."
+                  : `No ${statusFilter.toLowerCase()} orders found.`}
+              </p>
             </div>
           ) : (
-            <div className="max-h-[500px] overflow-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            <div className="max-h-[500px] overflow-auto tx-scrollbar">
+              <table className="w-full min-w-[760px] border-collapse text-left">
+                <thead className="sticky top-0 z-10 border-b border-[var(--tx-border)] bg-[var(--tx-surface-muted)]/95 backdrop-blur-xs">
                   <tr>
-                    <th className="px-6 py-3.5">Date &amp; Time</th>
-                    <th className="px-4 py-3.5">Stock</th>
-                    <th className="px-4 py-3.5">Type</th>
-                    <th className="px-4 py-3.5 text-right">Quantity</th>
-                    <th className="px-4 py-3.5 text-right">Execution Price</th>
-                    <th className="px-4 py-3.5 text-right">Total Amount</th>
-                    <th className="px-6 py-3.5 text-right">Status</th>
+                    <th className="tx-label px-5 py-3.5 sm:px-6">
+                      Date &amp; Time
+                    </th>
+                    <th className="tx-label px-4 py-3.5">Stock</th>
+                    <th className="tx-label px-4 py-3.5">Side</th>
+                    <th className="tx-label px-4 py-3.5 text-right">
+                      Quantity
+                    </th>
+                    <th className="tx-label px-4 py-3.5 text-right">
+                      Exec Price
+                    </th>
+                    <th className="tx-label px-4 py-3.5 text-right">
+                      Total Amount
+                    </th>
+                    <th className="tx-label px-5 py-3.5 text-right sm:px-6">
+                      Status
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <tbody className="divide-y divide-[var(--tx-border)]">
                   {filteredOrders.map((order) => (
                     <tr
                       key={order.id}
-                      className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                      className="group transition-colors duration-150 hover:bg-[var(--tx-surface-hover)]"
                     >
-                      <td className="px-6 py-3.5 text-xs text-slate-500 tabular-nums dark:text-slate-400">
+                      <td className="px-5 py-3.5 text-xs tabular-nums text-[var(--tx-text-muted)] sm:px-6">
                         {formatDateTime(order.createdAt)}
                       </td>
                       <td className="px-4 py-3.5">
                         <Link
                           to={`/stocks/${order.symbol}`}
-                          className="font-semibold text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
+                          className="text-[13px] font-semibold tracking-[0.02em] text-[var(--tx-text)] transition-opacity group-hover:opacity-90"
                         >
                           {order.symbol}
                         </Link>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-[var(--tx-text-muted)]">
                           {order.companyName}
                         </p>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-md px-2 py-0.5 text-xs font-semibold",
-                            order.orderType === "BUY"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                              : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                          )}
+                        <Badge
+                          variant={order.orderType === "BUY" ? "gain" : "loss"}
+                          size="sm"
                         >
                           {order.orderType}
-                        </span>
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                      <td className="px-4 py-3.5 text-right text-[13px] font-medium tabular-nums text-[var(--tx-text)]">
                         {formatNumber(order.quantity)}
                       </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                      <td className="px-4 py-3.5 text-right text-[13px] tabular-nums text-[var(--tx-text-secondary)]">
                         {formatINR(order.executionPrice)}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                      <td className="px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
                         {formatINR(order.totalAmount)}
                       </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-md px-2 py-0.5 text-xs font-medium",
-                            STATUS_BADGE_CLASSES[order.status]
-                          )}
+                      <td className="px-5 py-3.5 text-right sm:px-6">
+                        <Badge
+                          variant={STATUS_BADGE_VARIANT[order.status]}
+                          size="sm"
                         >
                           {order.status}
-                        </span>
+                        </Badge>
                       </td>
                     </tr>
                   ))}
