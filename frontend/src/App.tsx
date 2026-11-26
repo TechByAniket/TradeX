@@ -7,6 +7,9 @@ import { Button } from "@/components/common/Button";
 import { OverviewPage } from "@/pages/OverviewPage";
 import { ExploreStocksPage } from "@/pages/ExploreStocksPage";
 import { StockDetailsPage } from "@/pages/StockDetailsPage";
+import { PortfolioPage } from "@/pages/PortfolioPage";
+import { OrdersPage } from "@/pages/OrdersPage";
+import { TransactionsPage } from "@/pages/TransactionsPage";
 import { ShellRoutePage } from "@/pages/ShellRoutePage";
 
 function NotFoundPage() {
@@ -36,36 +39,9 @@ export function App() {
               <Route path="/" element={<OverviewPage />} />
               <Route path="/stocks" element={<ExploreStocksPage />} />
               <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
-              <Route
-                path="/portfolio"
-                element={
-                  <ShellRoutePage
-                    title="My Portfolio"
-                    description="Available cash, holdings valuation, and unrealized P&L."
-                    milestone="Group 6"
-                  />
-                }
-              />
-              <Route
-                path="/orders"
-                element={
-                  <ShellRoutePage
-                    title="Orders"
-                    description="Executed and historical BUY/SELL order records."
-                    milestone="Group 6"
-                  />
-                }
-              />
-              <Route
-                path="/transactions"
-                element={
-                  <ShellRoutePage
-                    title="Transactions"
-                    description="Debit and credit cash ledger for executed orders."
-                    milestone="Group 6"
-                  />
-                }
-              />
+              <Route path="/portfolio" element={<PortfolioPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
               <Route
                 path="/watchlist"
                 element={
