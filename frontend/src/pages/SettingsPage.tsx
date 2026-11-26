@@ -85,20 +85,24 @@ export function SettingsPage() {
             ) : (
               <div className="space-y-5">
                 <dl className="divide-y divide-[var(--tx-border)] text-[13px]">
-                  <div className="flex items-center justify-between py-3">
-                    <dt className="text-[var(--tx-text-muted)]">Name</dt>
-                    <dd className="font-medium text-[var(--tx-text)]">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <dt className="shrink-0 text-[var(--tx-text-muted)]">
+                      Name
+                    </dt>
+                    <dd className="min-w-0 truncate text-right font-medium text-[var(--tx-text)]">
                       {user.name}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between py-3">
-                    <dt className="text-[var(--tx-text-muted)]">Email</dt>
-                    <dd className="font-medium text-[var(--tx-text)]">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <dt className="shrink-0 text-[var(--tx-text-muted)]">
+                      Email
+                    </dt>
+                    <dd className="min-w-0 truncate text-right font-medium text-[var(--tx-text)]">
                       {user.email}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between py-3">
-                    <dt className="text-[var(--tx-text-muted)]">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <dt className="shrink-0 text-[var(--tx-text-muted)]">
                       Account Status
                     </dt>
                     <dd>
@@ -110,20 +114,20 @@ export function SettingsPage() {
                       </Badge>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between py-3">
-                    <dt className="text-[var(--tx-text-muted)]">
+                  <div className="flex items-center justify-between gap-4 py-3">
+                    <dt className="shrink-0 text-[var(--tx-text-muted)]">
                       Member Since
                     </dt>
-                    <dd className="font-medium text-[var(--tx-text)]">
+                    <dd className="text-right font-medium text-[var(--tx-text)]">
                       {formatMemberDate(user.created_at)}
                     </dd>
                   </div>
                   {portfolio && (
-                    <div className="flex items-center justify-between py-3">
-                      <dt className="text-[var(--tx-text-muted)]">
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <dt className="shrink-0 text-[var(--tx-text-muted)]">
                         Portfolio Cash ({portfolio.currency})
                       </dt>
-                      <dd className="font-semibold tabular-nums text-[var(--tx-text)]">
+                      <dd className="text-right font-semibold tabular-nums text-[var(--tx-text)]">
                         {formatINR(Number(portfolio.cash_balance))}
                       </dd>
                     </div>
@@ -151,7 +155,7 @@ export function SettingsPage() {
           </CardHeader>
 
           <CardContent className="pt-5">
-            <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--tx-border)] bg-[var(--tx-bg)]/60 p-4">
+            <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-[var(--tx-border)] bg-[var(--tx-bg)]/60 p-4 sm:flex-row sm:items-center">
               <div>
                 <p className="text-[13px] font-medium text-[var(--tx-text)]">
                   Theme Preference

@@ -142,19 +142,19 @@ export function ExploreStocksPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-start">
             <label
               htmlFor="stock-sort"
               className="tx-label shrink-0"
             >
               Sort
             </label>
-            <div className="relative">
+            <div className="relative flex-1 sm:flex-none">
               <select
                 id="stock-sort"
                 value={`${sortField}:${sortDirection}`}
                 onChange={(e) => handleSelectSortPreset(e.target.value)}
-                className="h-9 cursor-pointer appearance-none rounded-lg border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] pr-8 pl-3 text-xs font-medium text-[var(--tx-text)] transition-colors hover:border-[var(--tx-border-hover)] focus:border-[var(--tx-border-hover)] focus:bg-[var(--tx-surface-elevated)] focus:outline-none"
+                className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] pr-8 pl-3 text-xs font-medium text-[var(--tx-text)] transition-colors hover:border-[var(--tx-border-hover)] focus:border-[var(--tx-border-hover)] focus:bg-[var(--tx-surface-elevated)] focus:outline-none sm:w-auto"
               >
                 <option value="symbol:asc">Symbol (A–Z)</option>
                 <option value="changePercent:desc">

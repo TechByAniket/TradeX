@@ -28,7 +28,7 @@ export function MarketBadge({
     <span
       title="Prices are driven by the backend market simulator and do not reflect live exchange feeds"
       className={cn(
-        "tx-glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-semibold tracking-[0.09em] text-[var(--tx-text-secondary)]",
+        "tx-glass inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1 text-[10px] font-semibold tracking-[0.09em] text-[var(--tx-text-secondary)]",
         className
       )}
     >

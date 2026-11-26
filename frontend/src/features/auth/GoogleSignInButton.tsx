@@ -71,10 +71,14 @@ export function GoogleSignInButton({
           }
         },
       });
+      const availableWidth = containerRef.current.clientWidth;
+      const buttonWidth =
+        availableWidth > 0 ? Math.min(340, Math.max(220, availableWidth)) : 320;
+
       window.google.accounts.id.renderButton(containerRef.current, {
         theme: theme === "dark" ? "filled_black" : "outline",
         size: "large",
-        width: 340,
+        width: buttonWidth,
         text,
       });
     };

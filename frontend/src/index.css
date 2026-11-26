@@ -164,7 +164,7 @@
 /* Restrained scrollbar for fixed-height financial tables */
 .tx-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: var(--tx-border-strong) transparent;
 }
 
 .tx-scrollbar::-webkit-scrollbar {
@@ -177,12 +177,12 @@
 }
 
 .tx-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.14);
+  background-color: var(--tx-border-strong);
   border-radius: 9999px;
 }
 
 .tx-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.24);
+  background-color: var(--tx-border-hover);
 }
 
 /* Brief live price update feedback */
