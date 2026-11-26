@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/common/Button";
 import { OverviewPage } from "@/pages/OverviewPage";
 import { ExploreStocksPage } from "@/pages/ExploreStocksPage";
+import { StockDetailsPage } from "@/pages/StockDetailsPage";
 import { ShellRoutePage } from "@/pages/ShellRoutePage";
 
 function NotFoundPage() {
@@ -34,16 +35,7 @@ export function App() {
             <Route element={<AppShell />}>
               <Route path="/" element={<OverviewPage />} />
               <Route path="/stocks" element={<ExploreStocksPage />} />
-              <Route
-                path="/stocks/:symbol"
-                element={
-                  <ShellRoutePage
-                    title="Stock Details"
-                    description="Live price updates, intraday range, volume, and price history chart."
-                    milestone="Group 4"
-                  />
-                }
-              />
+              <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
               <Route
                 path="/portfolio"
                 element={
