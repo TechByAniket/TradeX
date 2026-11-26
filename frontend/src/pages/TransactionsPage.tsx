@@ -6,8 +6,15 @@ import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card, CardContent, CardHeader } from "@/components/common/Card";
+import { DateFilterInput } from "@/components/common/DateFilterInput";
 import { useAuth } from "@/context/AuthContext";
-import { cn, formatINR, formatNumber } from "@/lib/utils";
+import {
+  cn,
+  formatINR,
+  formatNumber,
+  formatShortDate,
+  toLocalDateKey,
+} from "@/lib/utils";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { fetchTransactions } from "@/services/tradingService";
 import type { TransactionRecord, TransactionType } from "@/types/trading";
@@ -33,6 +40,7 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TxFilter>("ALL");
+  const [selectedDate, setSelectedDate] = useState("");
 
   const loadTransactions = useCallback(async () => {
     if (!user) {
@@ -56,10 +64,17 @@ export function TransactionsPage() {
     void loadTransactions();
   }, [loadTransactions]);
 
+  const dateFilteredTransactions = useMemo(() => {
+    if (!selectedDate) return transactions;
+    return transactions.filter(
+      (tx) => toLocalDateKey(tx.createdAt) === selectedDate
+    );
+  }, [transactions, selectedDate]);
+
   const filteredTransactions = useMemo(() => {
-    if (typeFilter === "ALL") return transactions;
-    return transactions.filter((tx) => tx.type === typeFilter);
-  }, [transactions, typeFilter]);
+    if (typeFilter === "ALL") return dateFilteredTransactions;
+    return dateFilteredTransactions.filter((tx) => tx.type === typeFilter);
+  }, [dateFilteredTransactions, typeFilter]);
 
   if (authLoading) {
     return (
@@ -130,13 +145,14 @@ export function TransactionsPage() {
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-[var(--tx-border)] pb-4">
+        <CardHeader className="flex-row items-start justify-between gap-2.5 border-b border-[var(--tx-border)] pb-4 sm:items-center">
           <div className="inline-flex w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1">
             {(["ALL", "BUY_DEBIT", "SELL_CREDIT"] as TxFilter[]).map((type) => {
               const count =
                 type === "ALL"
-                  ? transactions.length
-                  : transactions.filter((t) => t.type === type).length;
+                  ? dateFilteredTransactions.length
+                  : dateFilteredTransactions.filter((t) => t.type === type)
+                      .length;
 
               const label =
                 type === "ALL"
@@ -187,6 +203,13 @@ export function TransactionsPage() {
               );
             })}
           </div>
+
+          <DateFilterInput
+            id="transactions-date-filter"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            ariaLabel="Filter transactions by date"
+          />
         </CardHeader>
 
         <CardContent className="p-0 sm:px-0">
@@ -200,11 +223,24 @@ export function TransactionsPage() {
               ))}
             </div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-14 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
               <ArrowLeftRight className="h-5 w-5 text-[var(--tx-text-muted)]" />
               <p className="text-[13px] text-[var(--tx-text-secondary)]">
-                No transactions recorded yet.
+                {transactions.length === 0
+                  ? "No transactions recorded yet."
+                  : selectedDate
+                    ? `No transactions found on ${formatShortDate(selectedDate)}.`
+                    : "No matching transactions found."}
               </p>
+              {selectedDate && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSelectedDate("")}
+                >
+                  Clear date filter
+                </Button>
+              )}
             </div>
           ) : (
             <div className="max-h-[500px] overflow-auto tx-scrollbar">
