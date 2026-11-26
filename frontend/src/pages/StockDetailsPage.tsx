@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useMarket } from "@/context/MarketContext";
 import { StockPriceChart } from "@/features/stocks/StockPriceChart";
+import { OrderTicket } from "@/features/trading/OrderTicket";
 import { cn, formatINR, formatNumber, formatPercent } from "@/lib/utils";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { fetchStockBySymbol, fetchStockHistory } from "@/services/marketService";
@@ -40,6 +41,9 @@ function formatLastUpdated(iso: string): string {
 
 export function StockDetailsPage() {
   const { symbol } = useParams<{ symbol: string }>();
+  const [searchParams] = useSearchParams();
+  const initialSide =
+    searchParams.get("action")?.toUpperCase() === "SELL" ? "SELL" : "BUY";
   const normalizedSymbol = (symbol || "").trim().toUpperCase();
 
   const { stockBySymbol, connectionStatus } = useMarket();
@@ -310,14 +314,21 @@ export function StockDetailsPage() {
         </Card>
       </div>
 
-      {/* Price Chart */}
-      <StockPriceChart
-        symbol={stock.symbol}
-        history={history}
-        loading={historyLoading}
-        isPositive={!isDown}
-        error={historyError}
-      />
+      {/* Price Chart + Trading Panel */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <StockPriceChart
+            symbol={stock.symbol}
+            history={history}
+            loading={historyLoading}
+            isPositive={!isDown}
+            error={historyError}
+          />
+        </div>
+        <div>
+          <OrderTicket stock={stock} initialSide={initialSide} />
+        </div>
+      </div>
     </div>
   );
 }
