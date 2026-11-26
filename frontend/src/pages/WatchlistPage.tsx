@@ -109,13 +109,13 @@ export function WatchlistPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <select
             value={selectedSymbol}
             onChange={(e) => setSelectedSymbol(e.target.value)}
             aria-label="Select stock to add to watchlist"
             disabled={availableToAdd.length === 0}
-            className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none disabled:opacity-50 sm:w-64 sm:flex-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
           >
             {availableToAdd.length === 0 ? (
               <option value="">All stocks added</option>

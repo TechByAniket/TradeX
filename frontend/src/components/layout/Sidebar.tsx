@@ -127,7 +127,7 @@ export function Sidebar({
     <>
       <aside
         className={cn(
-          "hidden shrink-0 border-r border-slate-200 transition-[width] duration-200 lg:block dark:border-slate-800",
+          "hidden shrink-0 border-r border-slate-200 transition-[width] duration-200 lg:sticky lg:top-0 lg:block lg:h-screen dark:border-slate-800",
           collapsed ? "w-[72px]" : "w-60"
         )}
       >

@@ -169,7 +169,7 @@ export function PortfolioPage() {
 
       {/* Portfolio Summary Cards */}
       {loading && !liveView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, idx) => (
             <Card key={idx}>
               <CardContent className="pt-5">
@@ -180,7 +180,7 @@ export function PortfolioPage() {
           ))}
         </div>
       ) : liveView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <Card>
             <CardHeader className="pb-1">
               <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
