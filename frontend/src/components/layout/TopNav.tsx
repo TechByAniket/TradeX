@@ -1,10 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, Moon, Search, Sun, User } from "lucide-react";
 import { MarketBadge } from "@/components/common/MarketBadge";
+import { useAuth } from "@/context/AuthContext";
+import { useMarket } from "@/context/MarketContext";
 import { useTheme } from "@/context/ThemeContext";
-import { getStoredToken } from "@/services/apiClient";
-import { fetchCurrentUser } from "@/services/authService";
 
 interface TopNavProps {
   onOpenMobileMenu: () => void;
@@ -13,33 +13,9 @@ interface TopNavProps {
 export function TopNav({ onOpenMobileMenu }: TopNavProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { connectionStatus } = useMarket();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [userName, setUserName] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = getStoredToken();
-    if (!token) {
-      setUserName(null);
-      return;
-    }
-
-    let cancelled = false;
-    fetchCurrentUser()
-      .then((res) => {
-        if (!cancelled) {
-          setUserName(res.user.name);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setUserName(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,7 +56,10 @@ export function TopNav({ onOpenMobileMenu }: TopNavProps) {
       </div>
 
       <div className="flex items-center gap-2.5 sm:gap-3">
-        <MarketBadge className="hidden xs:inline-flex sm:inline-flex" />
+        <MarketBadge
+          connectionStatus={connectionStatus}
+          className="hidden sm:inline-flex"
+        />
 
         <button
           type="button"
@@ -103,7 +82,7 @@ export function TopNav({ onOpenMobileMenu }: TopNavProps) {
             <User className="h-3.5 w-3.5" />
           </span>
           <span className="hidden max-w-28 truncate sm:inline">
-            {userName ?? "Account"}
+            {user?.name ?? "Account"}
           </span>
         </Link>
       </div>

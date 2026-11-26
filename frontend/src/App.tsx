@@ -1,7 +1,10 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import { MarketProvider } from "@/context/MarketContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/common/Button";
+import { OverviewPage } from "@/pages/OverviewPage";
 import { ShellRoutePage } from "@/pages/ShellRoutePage";
 
 function NotFoundPage() {
@@ -23,93 +26,88 @@ function NotFoundPage() {
 export function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route
-              path="/"
-              element={
-                <ShellRoutePage
-                  title="Overview"
-                  description="Market summary, live simulated watchlist, and top movers."
-                  milestone="Group 2"
-                />
-              }
-            />
-            <Route
-              path="/stocks"
-              element={
-                <ShellRoutePage
-                  title="Explore Stocks"
-                  description="Search and inspect supported simulated stocks."
-                  milestone="Group 3"
-                />
-              }
-            />
-            <Route
-              path="/stocks/:symbol"
-              element={
-                <ShellRoutePage
-                  title="Stock Details"
-                  description="Live price updates, intraday range, volume, and price history chart."
-                  milestone="Group 4"
-                />
-              }
-            />
-            <Route
-              path="/portfolio"
-              element={
-                <ShellRoutePage
-                  title="My Portfolio"
-                  description="Available cash, holdings valuation, and unrealized P&L."
-                  milestone="Group 6"
-                />
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <ShellRoutePage
-                  title="Orders"
-                  description="Executed and historical BUY/SELL order records."
-                  milestone="Group 6"
-                />
-              }
-            />
-            <Route
-              path="/transactions"
-              element={
-                <ShellRoutePage
-                  title="Transactions"
-                  description="Debit and credit cash ledger for executed orders."
-                  milestone="Group 6"
-                />
-              }
-            />
-            <Route
-              path="/watchlist"
-              element={
-                <ShellRoutePage
-                  title="Watchlist"
-                  description="Tracked stocks and quick market access."
-                  milestone="Group 7"
-                />
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ShellRoutePage
-                  title="Settings"
-                  description="Account profile, authentication session, and display preferences."
-                  milestone="Group 7"
-                />
-              }
-            />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <MarketProvider>
+          <BrowserRouter>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<OverviewPage />} />
+              <Route
+                path="/stocks"
+                element={
+                  <ShellRoutePage
+                    title="Explore Stocks"
+                    description="Search and inspect supported simulated stocks."
+                    milestone="Group 3"
+                  />
+                }
+              />
+              <Route
+                path="/stocks/:symbol"
+                element={
+                  <ShellRoutePage
+                    title="Stock Details"
+                    description="Live price updates, intraday range, volume, and price history chart."
+                    milestone="Group 4"
+                  />
+                }
+              />
+              <Route
+                path="/portfolio"
+                element={
+                  <ShellRoutePage
+                    title="My Portfolio"
+                    description="Available cash, holdings valuation, and unrealized P&L."
+                    milestone="Group 6"
+                  />
+                }
+              />
+              <Route
+                path="/orders"
+                element={
+                  <ShellRoutePage
+                    title="Orders"
+                    description="Executed and historical BUY/SELL order records."
+                    milestone="Group 6"
+                  />
+                }
+              />
+              <Route
+                path="/transactions"
+                element={
+                  <ShellRoutePage
+                    title="Transactions"
+                    description="Debit and credit cash ledger for executed orders."
+                    milestone="Group 6"
+                  />
+                }
+              />
+              <Route
+                path="/watchlist"
+                element={
+                  <ShellRoutePage
+                    title="Watchlist"
+                    description="Tracked stocks and quick market access."
+                    milestone="Group 7"
+                  />
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ShellRoutePage
+                    title="Settings"
+                    description="Account profile, authentication session, and display preferences."
+                    milestone="Group 7"
+                  />
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        </MarketProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
