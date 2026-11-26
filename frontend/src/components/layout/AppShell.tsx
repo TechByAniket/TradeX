@@ -8,7 +8,7 @@ export function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[var(--tx-bg)] text-[var(--tx-text)]">
+    <div className="flex min-h-screen bg-[var(--tx-workspace)] text-[var(--tx-text)]">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
@@ -18,7 +18,7 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <TopNav onOpenMobileMenu={() => setMobileMenuOpen(true)} />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
           <Outlet />
         </main>
       </div>
