@@ -15,8 +15,15 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/common/Card";
+import { DateFilterInput } from "@/components/common/DateFilterInput";
 import { useAuth } from "@/context/AuthContext";
-import { cn, formatINR, formatNumber } from "@/lib/utils";
+import {
+  cn,
+  formatINR,
+  formatNumber,
+  formatShortDate,
+  toLocalDateKey,
+} from "@/lib/utils";
 import { getApiErrorMessage } from "@/services/apiClient";
 import { fetchOrders } from "@/services/tradingService";
 import type { OrderRecord, OrderStatus } from "@/types/trading";
@@ -57,6 +64,7 @@ export function OrdersPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [selectedDate, setSelectedDate] = useState("");
 
   const loadOrders = useCallback(async () => {
     if (!user) {
@@ -80,10 +88,15 @@ export function OrdersPage() {
     void loadOrders();
   }, [loadOrders]);
 
+  const dateFilteredOrders = useMemo(() => {
+    if (!selectedDate) return orders;
+    return orders.filter((o) => toLocalDateKey(o.createdAt) === selectedDate);
+  }, [orders, selectedDate]);
+
   const filteredOrders = useMemo(() => {
-    if (statusFilter === "ALL") return orders;
-    return orders.filter((o) => o.status === statusFilter);
-  }, [orders, statusFilter]);
+    if (statusFilter === "ALL") return dateFilteredOrders;
+    return dateFilteredOrders.filter((o) => o.status === statusFilter);
+  }, [dateFilteredOrders, statusFilter]);
 
   if (authLoading) {
     return (
@@ -148,9 +161,9 @@ export function OrdersPage() {
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-[var(--tx-border)] pb-4">
+        <CardHeader className="flex-row items-center justify-between gap-2.5 border-b border-[var(--tx-border)] pb-4">
           {/* Mobile status filter dropdown */}
-          <div className="relative sm:hidden">
+          <div className="relative min-w-0 flex-1 sm:hidden">
             <select
               aria-label="Filter orders by status"
               value={statusFilter}
@@ -160,8 +173,9 @@ export function OrdersPage() {
               {STATUS_TABS.map((status) => {
                 const count =
                   status === "ALL"
-                    ? orders.length
-                    : orders.filter((o) => o.status === status).length;
+                    ? dateFilteredOrders.length
+                    : dateFilteredOrders.filter((o) => o.status === status)
+                        .length;
                 return (
                   <option key={status} value={status}>
                     {status} ({count})
@@ -177,8 +191,9 @@ export function OrdersPage() {
             {STATUS_TABS.map((status) => {
               const count =
                 status === "ALL"
-                  ? orders.length
-                  : orders.filter((o) => o.status === status).length;
+                  ? dateFilteredOrders.length
+                  : dateFilteredOrders.filter((o) => o.status === status)
+                      .length;
               const isActive = statusFilter === status;
 
               return (
@@ -221,6 +236,13 @@ export function OrdersPage() {
               );
             })}
           </div>
+
+          <DateFilterInput
+            id="orders-date-filter"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            ariaLabel="Filter orders by date"
+          />
         </CardHeader>
 
         <CardContent className="p-0 sm:px-0">
@@ -234,13 +256,24 @@ export function OrdersPage() {
               ))}
             </div>
           ) : filteredOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-14 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
               <ClipboardList className="h-5 w-5 text-[var(--tx-text-muted)]" />
               <p className="text-[13px] text-[var(--tx-text-secondary)]">
                 {orders.length === 0
                   ? "No orders have been placed yet."
-                  : `No ${statusFilter.toLowerCase()} orders found.`}
+                  : selectedDate
+                    ? `No ${statusFilter === "ALL" ? "" : `${statusFilter.toLowerCase()} `}orders found on ${formatShortDate(selectedDate)}.`
+                    : `No ${statusFilter.toLowerCase()} orders found.`}
               </p>
+              {selectedDate && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSelectedDate("")}
+                >
+                  Clear date filter
+                </Button>
+              )}
             </div>
           ) : (
             <div className="max-h-[500px] overflow-auto tx-scrollbar">
