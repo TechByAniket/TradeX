@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import {
   Card,
@@ -8,7 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
-import { cn, formatINR, formatPercent } from "@/lib/utils";
+import { LivePriceText } from "@/components/common/LivePriceText";
+import { cn, formatPercent } from "@/lib/utils";
 import type { MarketStock } from "@/types/market";
 
 interface MarketMoversCardProps {
@@ -56,21 +58,28 @@ export function MarketMoversCard({ stocks, loading }: MarketMoversCardProps) {
             aria-selected={activeTab === "gainers"}
             onClick={() => setActiveTab("gainers")}
             className={cn(
-              "flex cursor-pointer items-center justify-center gap-1.5 rounded-md border py-1.5 text-xs font-medium transition-all duration-150",
+              "relative flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150",
               activeTab === "gainers"
-                ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
-                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
+                ? "text-[var(--tx-text)]"
+                : "text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
+            {activeTab === "gainers" && (
+              <motion.span
+                layoutId="movers-active-pill"
+                transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                className="absolute inset-0 rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] shadow-2xs"
+              />
+            )}
             <TrendingUp
               className={cn(
-                "h-3.5 w-3.5",
+                "relative z-10 h-3.5 w-3.5",
                 activeTab === "gainers"
                   ? "text-[var(--tx-gain)]"
                   : "text-current"
               )}
             />
-            Top Gainers
+            <span className="relative z-10">Top Gainers</span>
           </button>
           <button
             type="button"
@@ -78,19 +87,26 @@ export function MarketMoversCard({ stocks, loading }: MarketMoversCardProps) {
             aria-selected={activeTab === "losers"}
             onClick={() => setActiveTab("losers")}
             className={cn(
-              "flex cursor-pointer items-center justify-center gap-1.5 rounded-md border py-1.5 text-xs font-medium transition-all duration-150",
+              "relative flex cursor-pointer items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-150",
               activeTab === "losers"
-                ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
-                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
+                ? "text-[var(--tx-text)]"
+                : "text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
+            {activeTab === "losers" && (
+              <motion.span
+                layoutId="movers-active-pill"
+                transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                className="absolute inset-0 rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] shadow-2xs"
+              />
+            )}
             <TrendingDown
               className={cn(
-                "h-3.5 w-3.5",
+                "relative z-10 h-3.5 w-3.5",
                 activeTab === "losers" ? "text-[var(--tx-loss)]" : "text-current"
               )}
             />
-            Top Losers
+            <span className="relative z-10">Top Losers</span>
           </button>
         </div>
       </CardHeader>
@@ -112,49 +128,58 @@ export function MarketMoversCard({ stocks, loading }: MarketMoversCardProps) {
               : "No stocks are currently trading lower than previous close."}
           </div>
         ) : (
-          <ul className="max-h-[372px] divide-y divide-[var(--tx-border)] overflow-y-auto tx-scrollbar">
-            {items.map((stock, idx) => {
-              const isPositive = stock.changePercent > 0;
-              return (
-                <li key={stock.id}>
-                  <Link
-                    to={`/stocks/${stock.symbol}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-[var(--tx-surface-hover)] sm:px-6"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="w-4 shrink-0 text-[11px] font-medium tabular-nums text-[var(--tx-text-muted)]">
-                        0{idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold tracking-[0.02em] text-[var(--tx-text)]">
-                          {stock.symbol}
+          <AnimatePresence mode="wait">
+            <motion.ul
+              key={activeTab}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.16, ease: "easeOut" }}
+              className="max-h-[372px] divide-y divide-[var(--tx-border)] overflow-y-auto tx-scrollbar"
+            >
+              {items.map((stock, idx) => {
+                const isPositive = stock.changePercent > 0;
+                return (
+                  <li key={stock.id}>
+                    <Link
+                      to={`/stocks/${stock.symbol}`}
+                      className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-[var(--tx-surface-hover)] sm:px-6"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="w-4 shrink-0 text-[11px] font-medium tabular-nums text-[var(--tx-text-muted)]">
+                          0{idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold tracking-[0.02em] text-[var(--tx-text)]">
+                            {stock.symbol}
+                          </p>
+                          <p className="truncate text-xs text-[var(--tx-text-muted)]">
+                            {stock.companyName}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <p className="text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
+                          <LivePriceText price={stock.currentPrice} />
                         </p>
-                        <p className="truncate text-xs text-[var(--tx-text-muted)]">
-                          {stock.companyName}
+                        <p
+                          className={cn(
+                            "mt-0.5 text-xs font-medium tabular-nums",
+                            isPositive
+                              ? "text-[var(--tx-gain)]"
+                              : "text-[var(--tx-loss)]"
+                          )}
+                        >
+                          {formatPercent(stock.changePercent)}
                         </p>
                       </div>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <p className="text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
-                        {formatINR(stock.currentPrice)}
-                      </p>
-                      <p
-                        className={cn(
-                          "mt-0.5 text-xs font-medium tabular-nums",
-                          isPositive
-                            ? "text-[var(--tx-gain)]"
-                            : "text-[var(--tx-loss)]"
-                        )}
-                      >
-                        {formatPercent(stock.changePercent)}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                    </Link>
+                  </li>
+                );
+              })}
+            </motion.ul>
+          </AnimatePresence>
         )}
       </CardContent>
     </Card>

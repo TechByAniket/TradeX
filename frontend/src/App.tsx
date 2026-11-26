@@ -1,4 +1,5 @@
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { MotionConfig } from "motion/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { MarketProvider } from "@/context/MarketContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -30,32 +31,34 @@ function NotFoundPage() {
 
 export function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <MarketProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route element={<AppShell />}>
-                <Route path="/" element={<OverviewPage />} />
-                <Route path="/login" element={<AuthPage mode="login" />} />
-                <Route
-                  path="/register"
-                  element={<AuthPage mode="register" />}
-                />
-                <Route path="/stocks" element={<ExploreStocksPage />} />
-                <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
-                <Route path="/portfolio" element={<PortfolioPage />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/transactions" element={<TransactionsPage />} />
-                <Route path="/watchlist" element={<WatchlistPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </MarketProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <MotionConfig reducedMotion="user">
+      <ThemeProvider>
+        <AuthProvider>
+          <MarketProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route element={<AppShell />}>
+                  <Route path="/" element={<OverviewPage />} />
+                  <Route path="/login" element={<AuthPage mode="login" />} />
+                  <Route
+                    path="/register"
+                    element={<AuthPage mode="register" />}
+                  />
+                  <Route path="/stocks" element={<ExploreStocksPage />} />
+                  <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
+                  <Route path="/portfolio" element={<PortfolioPage />} />
+                  <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/transactions" element={<TransactionsPage />} />
+                  <Route path="/watchlist" element={<WatchlistPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </MarketProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </MotionConfig>
   );
 }
 

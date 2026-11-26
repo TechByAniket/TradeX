@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useMarket } from "@/context/MarketContext";
@@ -228,7 +229,7 @@ export function WatchlistPage() {
                           </Link>
                         </td>
                         <td className="px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
-                          {formatINR(stock.currentPrice)}
+                          <LivePriceText price={stock.currentPrice} />
                         </td>
                         <td
                           className={cn(

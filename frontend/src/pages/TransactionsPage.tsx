@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { AlertCircle, ArrowLeftRight, RefreshCw } from "lucide-react";
 import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
 import { Badge } from "@/components/common/Badge";
@@ -149,22 +150,35 @@ export function TransactionsPage() {
                   type="button"
                   onClick={() => setTypeFilter(type)}
                   className={cn(
-                    "cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium tabular-nums transition-all duration-150",
+                    "relative cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium tabular-nums transition-colors duration-150",
                     isActive
-                      ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
-                      : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
+                      ? "text-[var(--tx-text)]"
+                      : "text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
                   )}
                 >
-                  {label}{" "}
-                  <span
-                    className={cn(
-                      "ml-0.5 text-[11px]",
-                      isActive
-                        ? "text-[var(--tx-text-secondary)]"
-                        : "text-[var(--tx-text-muted)]"
-                    )}
-                  >
-                    {count}
+                  {isActive && (
+                    <motion.span
+                      layoutId="transactions-type-pill"
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 38,
+                      }}
+                      className="absolute inset-0 rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] shadow-2xs"
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {label}{" "}
+                    <span
+                      className={cn(
+                        "ml-0.5 text-[11px]",
+                        isActive
+                          ? "text-[var(--tx-text-secondary)]"
+                          : "text-[var(--tx-text-muted)]"
+                      )}
+                    >
+                      {count}
+                    </span>
                   </span>
                 </button>
               );

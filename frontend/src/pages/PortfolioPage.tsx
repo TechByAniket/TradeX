@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useMarket } from "@/context/MarketContext";
@@ -356,7 +357,7 @@ export function PortfolioPage() {
                           {formatINR(holding.averageBuyPrice)}
                         </td>
                         <td className="px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
-                          {formatINR(holding.currentPrice)}
+                          <LivePriceText price={holding.currentPrice} />
                         </td>
                         <td className="px-4 py-3.5 text-right text-[13px] tabular-nums text-[var(--tx-text-secondary)]">
                           {formatINR(holding.investedValue)}

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { cn, formatINR, formatNumber, formatPercent } from "@/lib/utils";
 import type { MarketStock } from "@/types/market";
 
@@ -169,7 +170,7 @@ export function ExploreStocksTable({
                   </Link>
                 </td>
                 <td className="px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
-                  {formatINR(stock.currentPrice)}
+                  <LivePriceText price={stock.currentPrice} />
                 </td>
                 <td
                   className={cn(

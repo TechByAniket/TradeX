@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { AlertCircle, ClipboardList, RefreshCw } from "lucide-react";
 import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
 import { Badge, type BadgeVariant } from "@/components/common/Badge";
@@ -154,22 +155,35 @@ export function OrdersPage() {
                   type="button"
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    "cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium tabular-nums transition-all duration-150",
+                    "relative cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium tabular-nums transition-colors duration-150",
                     isActive
-                      ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
-                      : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
+                      ? "text-[var(--tx-text)]"
+                      : "text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
                   )}
                 >
-                  {status}{" "}
-                  <span
-                    className={cn(
-                      "ml-0.5 text-[11px]",
-                      isActive
-                        ? "text-[var(--tx-text-secondary)]"
-                        : "text-[var(--tx-text-muted)]"
-                    )}
-                  >
-                    {count}
+                  {isActive && (
+                    <motion.span
+                      layoutId="orders-status-pill"
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 38,
+                      }}
+                      className="absolute inset-0 rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] shadow-2xs"
+                    />
+                  )}
+                  <span className="relative z-10">
+                    {status}{" "}
+                    <span
+                      className={cn(
+                        "ml-0.5 text-[11px]",
+                        isActive
+                          ? "text-[var(--tx-text-secondary)]"
+                          : "text-[var(--tx-text-muted)]"
+                      )}
+                    >
+                      {count}
+                    </span>
                   </span>
                 </button>
               );

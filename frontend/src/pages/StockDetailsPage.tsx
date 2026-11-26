@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { LivePriceText } from "@/components/common/LivePriceText";
 import { MarketBadge } from "@/components/common/MarketBadge";
 import { useMarket } from "@/context/MarketContext";
 import { StockPriceChart } from "@/features/stocks/StockPriceChart";
@@ -243,7 +244,7 @@ export function StockDetailsPage() {
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <p className="text-3xl font-bold tracking-[-0.03em] tabular-nums text-[var(--tx-text)] sm:text-[34px]">
-              {formatINR(stock.currentPrice)}
+              <LivePriceText price={stock.currentPrice} />
             </p>
             <Badge
               variant={isUp ? "gain" : isDown ? "loss" : "neutral"}

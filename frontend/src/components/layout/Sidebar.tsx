@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeftRight,
   Bookmark,
@@ -108,8 +109,18 @@ export function Sidebar({
                   {({ isActive }) => (
                     <>
                       {!isCollapsed && isActive && (
-                        <span
+                        <motion.span
+                          layoutId={
+                            isMobile
+                              ? "sidebar-active-bar-mobile"
+                              : "sidebar-active-bar-desktop"
+                          }
                           aria-hidden="true"
+                          transition={{
+                            type: "spring",
+                            stiffness: 480,
+                            damping: 38,
+                          }}
                           className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r-full bg-[var(--tx-text)]"
                         />
                       )}
@@ -169,18 +180,30 @@ export function Sidebar({
         {navContent(false)}
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 flex lg:hidden">
-          <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs"
-            onClick={onCloseMobile}
-            aria-hidden="true"
-          />
-          <aside className="relative z-50 w-64 border-r border-[var(--tx-border-strong)] bg-[var(--tx-bg)] shadow-[0_24px_48px_rgba(0,0,0,0.85)]">
-            {navContent(true)}
-          </aside>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40 flex lg:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="fixed inset-0 bg-black/70 backdrop-blur-xs"
+              onClick={onCloseMobile}
+              aria-hidden="true"
+            />
+            <motion.aside
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-50 w-64 border-r border-[var(--tx-border-strong)] bg-[var(--tx-bg)] shadow-[0_24px_48px_rgba(0,0,0,0.85)]"
+            >
+              {navContent(true)}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
