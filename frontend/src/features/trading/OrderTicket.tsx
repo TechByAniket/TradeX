@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
+import { Input } from "@/components/common/Input";
 import { useAuth } from "@/context/AuthContext";
 import { cn, formatINR, formatNumber } from "@/lib/utils";
 import { getApiErrorMessage, setStoredToken } from "@/services/apiClient";
@@ -172,40 +174,53 @@ export function OrderTicket({
     }
   };
 
+  const sideActionClasses =
+    side === "BUY"
+      ? "bg-emerald-600 text-white hover:bg-emerald-500 dark:border dark:border-[var(--tx-gain-border)] dark:bg-emerald-500/18 dark:text-[var(--tx-gain)] dark:hover:bg-emerald-500/26"
+      : "bg-red-600 text-white hover:bg-red-500 dark:border dark:border-[var(--tx-loss-border)] dark:bg-red-500/18 dark:text-[var(--tx-loss)] dark:hover:bg-red-500/26";
+
   return (
-    <Card>
-      <CardHeader className="border-b border-slate-100 pb-4 dark:border-slate-800/80">
+    <Card variant="elevated">
+      <CardHeader className="border-b border-[var(--tx-border)] pb-4">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle>Place Order</CardTitle>
-            <CardDescription>{stock.symbol} · MARKET order</CardDescription>
+            <CardTitle className="tx-heading-section">Order Ticket</CardTitle>
+            <CardDescription>{stock.symbol} · Execution desk</CardDescription>
           </div>
-          <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <Badge variant="neutral" size="sm">
             MARKET
-          </span>
+          </Badge>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+        <div
+          role="tablist"
+          aria-label="Order side"
+          className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={side === "BUY"}
             onClick={() => handleSideChange("BUY")}
             className={cn(
-              "rounded-md py-1.5 text-xs font-semibold transition-colors",
+              "cursor-pointer rounded-md border py-1.5 text-xs font-semibold tracking-[0.04em] transition-all duration-150",
               side === "BUY"
-                ? "bg-emerald-600 text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "border-[var(--tx-gain-border)] bg-[var(--tx-gain-bg)] text-[var(--tx-gain)]"
+                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
             BUY
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={side === "SELL"}
             onClick={() => handleSideChange("SELL")}
             className={cn(
-              "rounded-md py-1.5 text-xs font-semibold transition-colors",
+              "cursor-pointer rounded-md border py-1.5 text-xs font-semibold tracking-[0.04em] transition-all duration-150",
               side === "SELL"
-                ? "bg-rose-600 text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] text-[var(--tx-loss)]"
+                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
             SELL
@@ -216,8 +231,8 @@ export function OrderTicket({
       <CardContent className="space-y-4 pt-5">
         {!user ? (
           <div className="space-y-4">
-            <div className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <div className="flex items-start gap-2.5 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)]/70 p-3 text-xs leading-relaxed text-[var(--tx-text-secondary)]">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--tx-text-muted)]" />
               <span>
                 Sign in with your TradeX account to place simulated BUY or SELL
                 orders.
@@ -225,44 +240,28 @@ export function OrderTicket({
             </div>
 
             <form onSubmit={handleQuickLogin} className="space-y-3">
-              <div>
-                <label
-                  htmlFor="trade-login-email"
-                  className="block text-xs font-medium text-slate-600 dark:text-slate-300"
-                >
-                  Email
-                </label>
-                <input
-                  id="trade-login-email"
-                  type="email"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                />
-              </div>
+              <Input
+                id="trade-login-email"
+                label="Email"
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
 
-              <div>
-                <label
-                  htmlFor="trade-login-password"
-                  className="block text-xs font-medium text-slate-600 dark:text-slate-300"
-                >
-                  Password
-                </label>
-                <input
-                  id="trade-login-password"
-                  type="password"
-                  required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-                />
-              </div>
+              <Input
+                id="trade-login-password"
+                label="Password"
+                type="password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Enter password"
+              />
 
               {loginError && (
-                <p className="text-xs text-rose-600 dark:text-rose-400">
+                <p className="text-xs font-medium text-[var(--tx-loss)]">
                   {loginError}
                 </p>
               )}
@@ -281,10 +280,10 @@ export function OrderTicket({
           <form onSubmit={handleReviewSubmit} className="space-y-4">
             {/* Quantity input */}
             <div>
-              <div className="flex items-center justify-between">
+              <div className="mb-1.5 flex items-center justify-between">
                 <label
                   htmlFor="order-quantity"
-                  className="text-xs font-medium text-slate-600 dark:text-slate-300"
+                  className="text-xs font-medium text-[var(--tx-text-secondary)]"
                 >
                   Quantity (Shares)
                 </label>
@@ -292,13 +291,13 @@ export function OrderTicket({
                   <button
                     type="button"
                     onClick={() => handleQuantityChange(String(availableShares))}
-                    className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                    className="cursor-pointer text-xs font-medium text-[var(--tx-text)] underline decoration-[var(--tx-border-hover)] underline-offset-4 transition-opacity hover:opacity-80"
                   >
                     Max: {formatNumber(availableShares)}
                   </button>
                 )}
               </div>
-              <input
+              <Input
                 id="order-quantity"
                 type="number"
                 min={1}
@@ -306,37 +305,37 @@ export function OrderTicket({
                 value={quantityInput}
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 disabled={submitting}
-                className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium tabular-nums text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                className="h-10 text-sm font-semibold tabular-nums"
               />
             </div>
 
             {/* Order breakdown */}
-            <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-800 dark:bg-slate-950/70">
+            <div className="space-y-2.5 rounded-xl border border-[var(--tx-border)] bg-[var(--tx-bg)]/60 p-3.5 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-[var(--tx-text-muted)]">
                   Reference Price
                 </span>
-                <span className="font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                <span className="font-medium tabular-nums text-[var(--tx-text)]">
                   {formatINR(stock.currentPrice)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-[var(--tx-text-muted)]">
                   Estimated Value
                 </span>
-                <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                <span className="text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
                   {isValidQty ? formatINR(estimatedValue) : "—"}
                 </span>
               </div>
 
-              <div className="border-t border-slate-200 pt-2 dark:border-slate-800">
+              <div className="border-t border-[var(--tx-border)] pt-2.5">
                 {side === "BUY" ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-[var(--tx-text-muted)]">
                       Available Cash
                     </span>
-                    <span className="font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                    <span className="font-medium tabular-nums text-[var(--tx-text)]">
                       {portfolioLoading && !portfolioData
                         ? "Loading..."
                         : formatINR(availableCash)}
@@ -344,10 +343,10 @@ export function OrderTicket({
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">
+                    <span className="text-[var(--tx-text-muted)]">
                       Available Holdings
                     </span>
-                    <span className="font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                    <span className="font-medium tabular-nums text-[var(--tx-text)]">
                       {portfolioLoading && !portfolioData
                         ? "Loading..."
                         : `${formatNumber(availableShares)} shares`}
@@ -358,7 +357,7 @@ export function OrderTicket({
             </div>
 
             {validationError && (
-              <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+              <p className="text-xs font-medium text-[var(--tx-loss)]">
                 {validationError}
               </p>
             )}
@@ -366,7 +365,7 @@ export function OrderTicket({
             {orderError && (
               <div
                 role="alert"
-                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+                className="flex items-start gap-2 rounded-lg border border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] p-3 text-xs text-[var(--tx-loss)]"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{orderError}</span>
@@ -376,24 +375,30 @@ export function OrderTicket({
             {!confirming ? (
               <Button
                 type="submit"
-                variant="primary"
+                variant="secondary"
+                size="lg"
                 disabled={Boolean(validationError) || submitting}
-                className={cn(
-                  "w-full",
-                  side === "SELL" &&
-                    "bg-rose-600 hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-                )}
+                className={cn("w-full border-0", sideActionClasses)}
               >
                 Review {side} Order
               </Button>
             ) : (
-              <div className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/70 p-3 dark:border-indigo-900/60 dark:bg-indigo-950/30">
-                <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                  Confirm {side} {formatNumber(parsedQty)} {stock.symbol}
-                </p>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300">
-                  Estimated {formatINR(estimatedValue)}. Final execution price is
-                  determined by the backend at submission.
+              <div className="tx-glass space-y-3 rounded-xl p-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-[var(--tx-text)]">
+                    Confirm {side} {formatNumber(parsedQty)} {stock.symbol}
+                  </p>
+                  <Badge variant={side === "BUY" ? "gain" : "loss"} size="sm">
+                    {side}
+                  </Badge>
+                </div>
+                <p className="text-[11px] leading-relaxed text-[var(--tx-text-secondary)]">
+                  Estimated{" "}
+                  <span className="font-semibold tabular-nums text-[var(--tx-text)]">
+                    {formatINR(estimatedValue)}
+                  </span>
+                  . Execution price is validated and finalized by the backend at
+                  submission.
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -407,16 +412,13 @@ export function OrderTicket({
                   </Button>
                   <Button
                     type="button"
-                    variant="primary"
+                    variant="secondary"
                     size="sm"
                     disabled={submitting}
                     onClick={() => {
                       void handleConfirmOrder();
                     }}
-                    className={cn(
-                      side === "SELL" &&
-                        "bg-rose-600 hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700"
-                    )}
+                    className={cn("border-0", sideActionClasses)}
                   >
                     {submitting ? "Submitting..." : `Confirm ${side}`}
                   </Button>
@@ -425,38 +427,38 @@ export function OrderTicket({
             )}
 
             {orderResult && (
-              <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-100">
+              <div className="space-y-2.5 rounded-xl border border-[var(--tx-gain-border)] bg-[var(--tx-gain-bg)] p-3.5 text-xs text-[var(--tx-text)]">
                 <div className="flex items-center justify-between gap-2 font-semibold">
-                  <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="inline-flex items-center gap-1.5 text-[var(--tx-gain)]">
+                    <CheckCircle2 className="h-4 w-4" />
                     Order {orderResult.order.status}
                   </span>
-                  <span>
+                  <span className="text-[11px] tracking-[0.04em] text-[var(--tx-text-secondary)]">
                     {orderResult.order.orderType} · {orderResult.order.symbol}
                   </span>
                 </div>
-                <div className="space-y-1 text-[11px] text-emerald-800 dark:text-emerald-200">
+                <div className="space-y-1.5 text-[11px] text-[var(--tx-text-secondary)]">
                   <div className="flex justify-between">
                     <span>Quantity</span>
-                    <span className="tabular-nums">
+                    <span className="tabular-nums text-[var(--tx-text)]">
                       {formatNumber(orderResult.order.quantity)} shares
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Execution Price</span>
-                    <span className="tabular-nums">
+                    <span className="tabular-nums text-[var(--tx-text)]">
                       {formatINR(orderResult.order.executionPrice)}
                     </span>
                   </div>
                   <div className="flex justify-between font-medium">
                     <span>Total Amount</span>
-                    <span className="tabular-nums">
+                    <span className="tabular-nums text-[var(--tx-text)]">
                       {formatINR(orderResult.order.totalAmount)}
                     </span>
                   </div>
-                  <div className="flex justify-between border-t border-emerald-200/70 pt-1 dark:border-emerald-800">
+                  <div className="flex justify-between border-t border-[var(--tx-gain-border)] pt-1.5 font-medium">
                     <span>Updated Cash</span>
-                    <span className="tabular-nums">
+                    <span className="tabular-nums text-[var(--tx-gain)]">
                       {formatINR(orderResult.cashBalance)}
                     </span>
                   </div>

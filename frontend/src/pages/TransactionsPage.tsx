@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, ArrowLeftRight, RefreshCw } from "lucide-react";
 import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
+import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card, CardContent, CardHeader } from "@/components/common/Card";
 import { useAuth } from "@/context/AuthContext";
@@ -62,8 +63,8 @@ export function TransactionsPage() {
   if (authLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-44 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
-        <div className="h-64 w-full animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-8 w-44 animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]" />
+        <div className="h-64 w-full animate-pulse rounded-xl bg-[var(--tx-surface-elevated)]" />
       </div>
     );
   }
@@ -79,18 +80,21 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end dark:border-slate-800">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
+      <div className="flex flex-col justify-between gap-4 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
+            Cash Settlement Ledger · Virtual INR
+          </p>
+          <h1 className="tx-heading-page text-2xl sm:text-[26px]">
             Transactions
           </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-[13px] text-[var(--tx-text-secondary)]">
             Cash movements recorded for your executed BUY and SELL orders.
           </p>
         </div>
 
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => {
             void loadTransactions();
@@ -105,7 +109,7 @@ export function TransactionsPage() {
       {error && (
         <div
           role="alert"
-          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 sm:flex-row sm:items-center dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200"
+          className="flex flex-col items-start justify-between gap-3 rounded-xl border border-[var(--tx-loss-border)] bg-[var(--tx-loss-bg)] px-4 py-3 text-[13px] text-[var(--tx-loss)] sm:flex-row sm:items-center"
         >
           <div className="flex items-center gap-2.5">
             <AlertCircle className="h-4 w-4 shrink-0" />
@@ -122,8 +126,8 @@ export function TransactionsPage() {
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-slate-200 pb-4 dark:border-slate-800">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <CardHeader className="border-b border-[var(--tx-border)] pb-4">
+          <div className="inline-flex w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1">
             {(["ALL", "BUY_DEBIT", "SELL_CREDIT"] as TxFilter[]).map((type) => {
               const count =
                 type === "ALL"
@@ -137,102 +141,119 @@ export function TransactionsPage() {
                     ? "BUY DEBIT"
                     : "SELL CREDIT";
 
+              const isActive = typeFilter === type;
+
               return (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setTypeFilter(type)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                    typeFilter === type
-                      ? "bg-indigo-600 text-white dark:bg-indigo-500"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    "cursor-pointer rounded-md border px-3 py-1.5 text-xs font-medium tabular-nums transition-all duration-150",
+                    isActive
+                      ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
+                      : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
                   )}
                 >
-                  {label} ({count})
+                  {label}{" "}
+                  <span
+                    className={cn(
+                      "ml-0.5 text-[11px]",
+                      isActive
+                        ? "text-[var(--tx-text-secondary)]"
+                        : "text-[var(--tx-text-muted)]"
+                    )}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}
           </div>
         </CardHeader>
 
-        <CardContent className="p-0">
+        <CardContent className="p-0 sm:px-0">
           {loading && transactions.length === 0 ? (
-            <div className="space-y-3 p-6">
+            <div className="space-y-2.5 p-5 sm:p-6">
               {Array.from({ length: 5 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="h-10 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70"
+                  className="h-10 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]"
                 />
               ))}
             </div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
-              No transactions recorded yet.
+            <div className="flex flex-col items-center justify-center gap-2.5 px-6 py-14 text-center">
+              <ArrowLeftRight className="h-5 w-5 text-[var(--tx-text-muted)]" />
+              <p className="text-[13px] text-[var(--tx-text-secondary)]">
+                No transactions recorded yet.
+              </p>
             </div>
           ) : (
-            <div className="max-h-[500px] overflow-auto">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            <div className="max-h-[500px] overflow-auto tx-scrollbar">
+              <table className="w-full min-w-[760px] border-collapse text-left">
+                <thead className="sticky top-0 z-10 border-b border-[var(--tx-border)] bg-[var(--tx-surface-muted)]/95 backdrop-blur-xs">
                   <tr>
-                    <th className="px-6 py-3.5">Date &amp; Time</th>
-                    <th className="px-4 py-3.5">Stock</th>
-                    <th className="px-4 py-3.5">Type</th>
-                    <th className="px-4 py-3.5 text-right">Quantity</th>
-                    <th className="px-4 py-3.5 text-right">Amount</th>
-                    <th className="px-6 py-3.5 text-right">Balance After</th>
+                    <th className="tx-label px-5 py-3.5 sm:px-6">
+                      Date &amp; Time
+                    </th>
+                    <th className="tx-label px-4 py-3.5">Stock</th>
+                    <th className="tx-label px-4 py-3.5">Type</th>
+                    <th className="tx-label px-4 py-3.5 text-right">
+                      Quantity
+                    </th>
+                    <th className="tx-label px-4 py-3.5 text-right">Amount</th>
+                    <th className="tx-label px-5 py-3.5 text-right sm:px-6">
+                      Balance After
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <tbody className="divide-y divide-[var(--tx-border)]">
                   {filteredTransactions.map((tx) => {
                     const isCredit = tx.type === "SELL_CREDIT";
 
                     return (
                       <tr
                         key={tx.id}
-                        className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                        className="group transition-colors duration-150 hover:bg-[var(--tx-surface-hover)]"
                       >
-                        <td className="px-6 py-3.5 text-xs text-slate-500 tabular-nums dark:text-slate-400">
+                        <td className="px-5 py-3.5 text-xs tabular-nums text-[var(--tx-text-muted)] sm:px-6">
                           {formatDateTime(tx.createdAt)}
                         </td>
                         <td className="px-4 py-3.5">
                           <Link
                             to={`/stocks/${tx.symbol}`}
-                            className="font-semibold text-slate-900 hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
+                            className="text-[13px] font-semibold tracking-[0.02em] text-[var(--tx-text)] transition-opacity group-hover:opacity-90"
                           >
                             {tx.symbol}
                           </Link>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-[var(--tx-text-muted)]">
                             {tx.companyName}
                           </p>
                         </td>
                         <td className="px-4 py-3.5">
-                          <span
-                            className={cn(
-                              "inline-flex rounded-md px-2 py-0.5 text-xs font-semibold",
-                              isCredit
-                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                            )}
+                          <Badge
+                            variant={isCredit ? "gain" : "loss"}
+                            size="sm"
                           >
                             {isCredit ? "SELL CREDIT" : "BUY DEBIT"}
-                          </span>
+                          </Badge>
                         </td>
-                        <td className="px-4 py-3.5 text-right font-medium tabular-nums text-slate-900 dark:text-slate-100">
+                        <td className="px-4 py-3.5 text-right text-[13px] font-medium tabular-nums text-[var(--tx-text)]">
                           {formatNumber(tx.quantity)}
                         </td>
                         <td
                           className={cn(
-                            "px-4 py-3.5 text-right font-semibold tabular-nums",
+                            "px-4 py-3.5 text-right text-[13px] font-semibold tabular-nums",
                             isCredit
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
+                              ? "text-[var(--tx-gain)]"
+                              : "text-[var(--tx-loss)]"
                           )}
                         >
                           {isCredit ? "+" : "-"}
                           {formatINR(tx.amount)}
                         </td>
-                        <td className="px-6 py-3.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                        <td className="px-5 py-3.5 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)] sm:px-6">
                           {formatINR(tx.balanceAfter)}
                         </td>
                       </tr>
