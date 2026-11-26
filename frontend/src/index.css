@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --tx-bg: #f8fafc;
+  --tx-surface: #ffffff;
+  --tx-surface-muted: #f1f5f9;
+  --tx-border: #e2e8f0;
+  --tx-text: #0f172a;
+  --tx-text-muted: #64748b;
+  --tx-primary: #4f46e5;
+  --tx-primary-hover: #4338ca;
+  --tx-gain: #059669;
+  --tx-loss: #dc2626;
+}
+
+.dark {
+  --tx-bg: #0b1120;
+  --tx-surface: #111827;
+  --tx-surface-muted: #1e293b;
+  --tx-border: #1f2937;
+  --tx-text: #f8fafc;
+  --tx-text-muted: #94a3b8;
+  --tx-primary: #6366f1;
+  --tx-primary-hover: #4f46e5;
+  --tx-gain: #10b981;
+  --tx-loss: #f87171;
+}
+
+@layer base {
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      sans-serif;
+    background-color: var(--tx-bg);
+    color: var(--tx-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
