@@ -38,89 +38,113 @@ export function MarketMoversCard({ stocks, loading }: MarketMoversCardProps) {
   const items = activeTab === "gainers" ? gainers : losers;
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="border-b border-slate-100 pb-4 dark:border-slate-800/80">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <CardTitle>Market Movers</CardTitle>
-            <CardDescription>Ranked by session % change</CardDescription>
-          </div>
+    <Card className="flex flex-col overflow-hidden">
+      <CardHeader className="border-b border-[var(--tx-border)] pb-4">
+        <div>
+          <CardTitle className="tx-heading-section">Market Movers</CardTitle>
+          <CardDescription>Ranked by session % movement</CardDescription>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+        <div
+          role="tablist"
+          aria-label="Market movers direction"
+          className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "gainers"}
             onClick={() => setActiveTab("gainers")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors",
+              "flex cursor-pointer items-center justify-center gap-1.5 rounded-md border py-1.5 text-xs font-medium transition-all duration-150",
               activeTab === "gainers"
-                ? "bg-white text-emerald-700 shadow-2xs dark:bg-slate-900 dark:text-emerald-400"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
+                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
-            <TrendingUp className="h-3.5 w-3.5" />
+            <TrendingUp
+              className={cn(
+                "h-3.5 w-3.5",
+                activeTab === "gainers"
+                  ? "text-[var(--tx-gain)]"
+                  : "text-current"
+              )}
+            />
             Top Gainers
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "losers"}
             onClick={() => setActiveTab("losers")}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors",
+              "flex cursor-pointer items-center justify-center gap-1.5 rounded-md border py-1.5 text-xs font-medium transition-all duration-150",
               activeTab === "losers"
-                ? "bg-white text-rose-700 shadow-2xs dark:bg-slate-900 dark:text-rose-400"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] text-[var(--tx-text)] shadow-2xs"
+                : "border-transparent text-[var(--tx-text-muted)] hover:text-[var(--tx-text-secondary)]"
             )}
           >
-            <TrendingDown className="h-3.5 w-3.5" />
+            <TrendingDown
+              className={cn(
+                "h-3.5 w-3.5",
+                activeTab === "losers" ? "text-[var(--tx-loss)]" : "text-current"
+              )}
+            />
             Top Losers
           </button>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 pt-4">
+      <CardContent className="flex-1 p-0 sm:px-0">
         {loading && stocks.length === 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5 p-5 sm:p-6">
             {Array.from({ length: 5 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-12 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70"
+                className="h-12 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]"
               />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+          <div className="px-6 py-12 text-center text-[13px] text-[var(--tx-text-muted)]">
             {activeTab === "gainers"
               ? "No stocks are currently trading higher than previous close."
               : "No stocks are currently trading lower than previous close."}
           </div>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800/80">
-            {items.map((stock) => {
+          <ul className="max-h-[372px] divide-y divide-[var(--tx-border)] overflow-y-auto tx-scrollbar">
+            {items.map((stock, idx) => {
               const isPositive = stock.changePercent > 0;
               return (
                 <li key={stock.id}>
                   <Link
                     to={`/stocks/${stock.symbol}`}
-                    className="flex items-center justify-between gap-3 py-3 transition-colors hover:opacity-80"
+                    className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-[var(--tx-surface-hover)] sm:px-6"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {stock.symbol}
-                      </p>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                        {stock.companyName}
-                      </p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="w-4 shrink-0 text-[11px] font-medium tabular-nums text-[var(--tx-text-muted)]">
+                        0{idx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-semibold tracking-[0.02em] text-[var(--tx-text)]">
+                          {stock.symbol}
+                        </p>
+                        <p className="truncate text-xs text-[var(--tx-text-muted)]">
+                          {stock.companyName}
+                        </p>
+                      </div>
                     </div>
+
                     <div className="shrink-0 text-right">
-                      <p className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                      <p className="text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
                         {formatINR(stock.currentPrice)}
                       </p>
                       <p
                         className={cn(
-                          "text-xs font-medium tabular-nums",
+                          "mt-0.5 text-xs font-medium tabular-nums",
                           isPositive
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-rose-600 dark:text-rose-400"
+                            ? "text-[var(--tx-gain)]"
+                            : "text-[var(--tx-loss)]"
                         )}
                       >
                         {formatPercent(stock.changePercent)}

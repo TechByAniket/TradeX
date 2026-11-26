@@ -1,4 +1,12 @@
-import { Activity, BarChart3, Clock, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Activity,
+  ArrowUpRight,
+  BarChart3,
+  Clock,
+  TrendingUp,
+} from "lucide-react";
+import { Badge } from "@/components/common/Badge";
 import { Card, CardContent } from "@/components/common/Card";
 import { cn, formatPercent } from "@/lib/utils";
 import type { SocketConnectionStatus } from "@/context/MarketContext";
@@ -24,10 +32,17 @@ function formatTimeOnly(iso: string | null): string {
 }
 
 const STREAM_LABEL: Record<SocketConnectionStatus, string> = {
-  live: "Real-time Socket.IO active",
+  live: "Socket.IO stream active",
   connecting: "Connecting to live stream",
   reconnecting: "Reconnecting to stream",
   offline: "Stream disconnected",
+};
+
+const STREAM_DOT: Record<SocketConnectionStatus, string> = {
+  live: "bg-emerald-400",
+  connecting: "bg-amber-400",
+  reconnecting: "bg-amber-400",
+  offline: "bg-red-400",
 };
 
 export function MarketSummaryCards({
@@ -42,9 +57,9 @@ export function MarketSummaryCards({
         {Array.from({ length: 4 }).map((_, idx) => (
           <Card key={idx}>
             <CardContent className="pt-5">
-              <div className="h-3.5 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-              <div className="mt-3 h-6 w-28 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
-              <div className="mt-2 h-3 w-32 animate-pulse rounded bg-slate-100 dark:bg-slate-800/60" />
+              <div className="h-3 w-24 animate-pulse rounded bg-[var(--tx-surface-elevated)]" />
+              <div className="mt-3.5 h-7 w-28 animate-pulse rounded bg-[var(--tx-surface-elevated)]" />
+              <div className="mt-2.5 h-3 w-36 animate-pulse rounded bg-[var(--tx-surface-muted)]" />
             </CardContent>
           </Card>
         ))}
@@ -55,6 +70,9 @@ export function MarketSummaryCards({
   const advancers = stocks.filter((s) => s.change > 0).length;
   const decliners = stocks.filter((s) => s.change < 0).length;
   const flat = stocks.length - advancers - decliners;
+  const total = stocks.length || 1;
+  const upPct = Math.round((advancers / total) * 100);
+  const downPct = Math.round((decliners / total) * 100);
 
   const topGainer =
     stocks.length > 0
@@ -63,99 +81,133 @@ export function MarketSummaryCards({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Card>
+      {/* 1. Tracked Stocks */}
+      <Card interactive>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Tracked Stocks
+            <span className="tx-label">Tracked Stocks</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] text-[var(--tx-text-muted)]">
+              <BarChart3 className="h-3.5 w-3.5" />
             </span>
-            <BarChart3 className="h-4 w-4 text-slate-400" />
           </div>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-50">
-            {stocks.length}
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            NSE simulated symbols (INR)
+          <div className="mt-3 flex items-baseline gap-2.5">
+            <p className="text-[28px] font-bold leading-none tracking-[-0.03em] tabular-nums text-[var(--tx-text)]">
+              {stocks.length}
+            </p>
+            <Badge variant="neutral" size="sm">
+              NSE · INR
+            </Badge>
+          </div>
+          <p className="mt-2.5 text-xs text-[var(--tx-text-muted)]">
+            Simulated instruments active
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* 2. Market Breadth */}
+      <Card interactive>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Market Breadth
+            <span className="tx-label">Market Breadth</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] text-[var(--tx-text-muted)]">
+              <Activity className="h-3.5 w-3.5" />
             </span>
-            <Activity className="h-4 w-4 text-slate-400" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2.5 text-2xl font-semibold tabular-nums">
-            <span className="text-emerald-600 dark:text-emerald-400">
-              {advancers} Up
-            </span>
-            <span className="text-sm font-normal text-slate-300 dark:text-slate-700">
+          <div className="mt-3 flex items-baseline gap-2 text-[22px] font-bold leading-none tracking-[-0.02em] tabular-nums">
+            <span className="text-[var(--tx-gain)]">{advancers} Up</span>
+            <span className="text-sm font-normal text-[var(--tx-text-muted)]">
               /
             </span>
-            <span className="text-rose-600 dark:text-rose-400">
-              {decliners} Down
-            </span>
+            <span className="text-[var(--tx-loss)]">{decliners} Down</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {flat > 0 ? `${flat} unchanged vs prev close` : "Active movers"}
+          <div
+            aria-hidden="true"
+            className="mt-3 flex h-1 w-full overflow-hidden rounded-full bg-[var(--tx-surface-elevated)]"
+          >
+            <div
+              className="h-full bg-emerald-400/85 transition-all duration-300"
+              style={{ width: `${upPct}%` }}
+            />
+            <div
+              className="h-full bg-red-400/85 transition-all duration-300"
+              style={{ width: `${downPct}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-[var(--tx-text-muted)]">
+            {flat > 0 ? `${flat} unchanged vs prev close` : "Session ratio vs prev close"}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* 3. Leading Stock (subtle elevated treatment) */}
+      <Card variant="elevated" interactive>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Leading Stock
+            <span className="tx-label">Leading Stock</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--tx-border-strong)] bg-[var(--tx-glass)] text-[var(--tx-text-secondary)]">
+              <TrendingUp className="h-3.5 w-3.5" />
             </span>
-            <TrendingUp className="h-4 w-4 text-slate-400" />
           </div>
           {topGainer ? (
             <>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-                  {topGainer.symbol}
-                </span>
-                <span
-                  className={cn(
-                    "text-sm font-semibold tabular-nums",
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <Link
+                  to={`/stocks/${topGainer.symbol}`}
+                  className="group inline-flex items-center gap-1 text-[22px] font-bold leading-none tracking-[-0.025em] text-[var(--tx-text)] transition-opacity hover:opacity-80"
+                >
+                  <span>{topGainer.symbol}</span>
+                  <ArrowUpRight className="h-4 w-4 text-[var(--tx-text-muted)] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Link>
+                <Badge
+                  variant={
                     topGainer.changePercent > 0
-                      ? "text-emerald-600 dark:text-emerald-400"
+                      ? "gain"
                       : topGainer.changePercent < 0
-                        ? "text-rose-600 dark:text-rose-400"
-                        : "text-slate-500"
-                  )}
+                        ? "loss"
+                        : "neutral"
+                  }
                 >
                   {formatPercent(topGainer.changePercent)}
-                </span>
+                </Badge>
               </div>
-              <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-2.5 truncate text-xs text-[var(--tx-text-secondary)]">
                 {topGainer.companyName}
               </p>
             </>
           ) : (
-            <p className="mt-2 text-2xl font-semibold text-slate-400">—</p>
+            <>
+              <p className="mt-3 text-2xl font-bold text-[var(--tx-text-muted)]">
+                —
+              </p>
+              <p className="mt-2 text-xs text-[var(--tx-text-muted)]">
+                Waiting for market feed
+              </p>
+            </>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      {/* 4. Last Sync (selective glass treatment) */}
+      <Card variant="glass" interactive>
         <CardContent className="pt-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Last Sync
+            <span className="tx-label">Last Sync</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--tx-border)] bg-[var(--tx-surface)] text-[var(--tx-text-muted)]">
+              <Clock className="h-3.5 w-3.5" />
             </span>
-            <Clock className="h-4 w-4 text-slate-400" />
           </div>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+          <p className="mt-3 text-[26px] font-bold leading-none tracking-[-0.025em] tabular-nums text-[var(--tx-text)]">
             {formatTimeOnly(lastUpdated)}
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {STREAM_LABEL[connectionStatus]}
-          </p>
+          <div className="mt-2.5 flex items-center gap-2 text-xs text-[var(--tx-text-secondary)]">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 shrink-0 rounded-full",
+                STREAM_DOT[connectionStatus]
+              )}
+            />
+            <span className="truncate">{STREAM_LABEL[connectionStatus]}</span>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/common/Badge";
+import { Button } from "@/components/common/Button";
 import {
   Card,
   CardContent,
@@ -7,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
-import { Button } from "@/components/common/Button";
 import { cn, formatINR, formatPercent } from "@/lib/utils";
 import type { MarketStock } from "@/types/market";
 
@@ -22,49 +23,51 @@ export function WatchlistPreviewTable({
 }: WatchlistPreviewTableProps) {
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
-        <div>
-          <CardTitle>Market Watchlist</CardTitle>
+      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-[var(--tx-border)] pb-4">
+        <div className="min-w-0">
+          <CardTitle className="tx-heading-section">Market Watchlist</CardTitle>
           <CardDescription>
-            Live simulated prices across supported stocks
+            Live simulated prices across tracked NSE symbols
           </CardDescription>
         </div>
-        <Link to="/stocks">
-          <Button variant="ghost" size="sm">
+        <Link to="/stocks" className="shrink-0">
+          <Button variant="outline" size="sm">
             Explore all
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </Link>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 sm:px-0">
         {loading && stocks.length === 0 ? (
-          <div className="space-y-3 p-6">
+          <div className="space-y-2.5 p-5 sm:p-6">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="h-10 w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/70"
+                className="h-10 w-full animate-pulse rounded-lg bg-[var(--tx-surface-elevated)]"
               />
             ))}
           </div>
         ) : stocks.length === 0 ? (
-          <div className="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+          <div className="px-6 py-12 text-center text-[13px] text-[var(--tx-text-muted)]">
             No simulated stocks are currently available.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                  <th className="px-6 py-3">Company</th>
-                  <th className="px-4 py-3">Symbol</th>
-                  <th className="px-4 py-3 text-right">Current Price</th>
-                  <th className="px-4 py-3 text-right">Change</th>
-                  <th className="px-4 py-3 text-right">Change %</th>
-                  <th className="px-6 py-3 text-right">Action</th>
+          <div className="max-h-[430px] overflow-auto tx-scrollbar">
+            <table className="w-full min-w-[600px] border-collapse text-left">
+              <thead className="sticky top-0 z-10 border-b border-[var(--tx-border)] bg-[var(--tx-surface-muted)]/95 backdrop-blur-xs">
+                <tr>
+                  <th className="tx-label px-5 py-3 sm:px-6">Company</th>
+                  <th className="tx-label px-4 py-3">Symbol</th>
+                  <th className="tx-label px-4 py-3 text-right">Price</th>
+                  <th className="tx-label px-4 py-3 text-right">Change</th>
+                  <th className="tx-label px-4 py-3 text-right">Change %</th>
+                  <th className="tx-label px-5 py-3 text-right sm:px-6">
+                    Trade
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <tbody className="divide-y divide-[var(--tx-border)]">
                 {stocks.map((stock) => {
                   const isUp = stock.change > 0;
                   const isDown = stock.change < 0;
@@ -72,50 +75,44 @@ export function WatchlistPreviewTable({
                   return (
                     <tr
                       key={stock.id}
-                      className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                      className="group transition-colors duration-150 hover:bg-[var(--tx-surface-hover)]"
                     >
-                      <td className="px-6 py-3.5 font-medium text-slate-900 dark:text-slate-100">
+                      <td className="px-5 py-3 sm:px-6">
                         <Link
                           to={`/stocks/${stock.symbol}`}
-                          className="hover:text-indigo-600 dark:hover:text-indigo-400"
+                          className="block truncate text-[13px] font-medium text-[var(--tx-text)] transition-opacity group-hover:opacity-90"
                         >
                           {stock.companyName}
                         </Link>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3">
                         <Link
                           to={`/stocks/${stock.symbol}`}
-                          className="inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold tracking-wide text-slate-700 hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                          className="text-xs font-semibold tracking-[0.06em] text-[var(--tx-text-secondary)] transition-colors hover:text-[var(--tx-text)]"
                         >
                           {stock.symbol}
                         </Link>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-semibold tabular-nums text-slate-900 dark:text-slate-50">
+                      <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums text-[var(--tx-text)]">
                         {formatINR(stock.currentPrice)}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-3.5 text-right font-medium tabular-nums",
+                          "px-4 py-3 text-right text-[13px] font-medium tabular-nums",
                           isUp
-                            ? "text-emerald-600 dark:text-emerald-400"
+                            ? "text-[var(--tx-gain)]"
                             : isDown
-                              ? "text-rose-600 dark:text-rose-400"
-                              : "text-slate-500 dark:text-slate-400"
+                              ? "text-[var(--tx-loss)]"
+                              : "text-[var(--tx-text-muted)]"
                         )}
                       >
                         {isUp ? "+" : ""}
                         {formatINR(stock.change)}
                       </td>
-                      <td className="px-4 py-3.5 text-right">
-                        <span
-                          className={cn(
-                            "inline-flex items-center justify-end gap-1 rounded-md px-2 py-0.5 text-xs font-medium tabular-nums",
-                            isUp
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                              : isDown
-                                ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                          )}
+                      <td className="px-4 py-3 text-right">
+                        <Badge
+                          variant={isUp ? "gain" : isDown ? "loss" : "neutral"}
+                          size="sm"
                         >
                           {isUp ? (
                             <TrendingUp className="h-3 w-3" />
@@ -125,11 +122,15 @@ export function WatchlistPreviewTable({
                             <Minus className="h-3 w-3" />
                           )}
                           {formatPercent(stock.changePercent)}
-                        </span>
+                        </Badge>
                       </td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-5 py-3 text-right sm:px-6">
                         <Link to={`/stocks/${stock.symbol}?action=buy`}>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2.5 text-[11px]"
+                          >
                             BUY
                           </Button>
                         </Link>
