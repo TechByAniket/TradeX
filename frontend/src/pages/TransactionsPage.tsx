@@ -81,8 +81,8 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
-        <div className="space-y-1.5">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--tx-border)] pb-6 sm:items-end">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
             Cash Settlement Ledger · Virtual INR
           </p>
@@ -97,13 +97,16 @@ export function TransactionsPage() {
         <Button
           variant="secondary"
           size="sm"
+          aria-label="Refresh transactions"
+          title="Refresh"
           onClick={() => {
             void loadTransactions();
           }}
           disabled={loading}
+          className="w-8 shrink-0 px-0 sm:w-auto sm:px-3"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 

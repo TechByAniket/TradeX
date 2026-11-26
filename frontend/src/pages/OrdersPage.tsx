@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { AlertCircle, ClipboardList, RefreshCw } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  ClipboardList,
+  RefreshCw,
+} from "lucide-react";
 import { AuthRequiredCard } from "@/components/common/AuthRequiredCard";
 import { Badge, type BadgeVariant } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
@@ -100,8 +105,8 @@ export function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
-        <div className="space-y-1.5">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--tx-border)] pb-6 sm:items-end">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
             Execution Blotter · Simulated Orders
           </p>
@@ -114,13 +119,16 @@ export function OrdersPage() {
         <Button
           variant="secondary"
           size="sm"
+          aria-label="Refresh orders"
+          title="Refresh"
           onClick={() => {
             void loadOrders();
           }}
           disabled={loading}
+          className="w-8 shrink-0 px-0 sm:w-auto sm:px-3"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
@@ -141,7 +149,31 @@ export function OrdersPage() {
 
       <Card className="overflow-hidden">
         <CardHeader className="border-b border-[var(--tx-border)] pb-4">
-          <div className="inline-flex w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1">
+          {/* Mobile status filter dropdown */}
+          <div className="relative sm:hidden">
+            <select
+              aria-label="Filter orders by status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-[var(--tx-border)] bg-[var(--tx-surface-muted)] pr-8 pl-3 text-xs font-medium tabular-nums text-[var(--tx-text)] transition-colors focus:border-[var(--tx-border-hover)] focus:bg-[var(--tx-surface-elevated)] focus:outline-none"
+            >
+              {STATUS_TABS.map((status) => {
+                const count =
+                  status === "ALL"
+                    ? orders.length
+                    : orders.filter((o) => o.status === status).length;
+                return (
+                  <option key={status} value={status}>
+                    {status} ({count})
+                  </option>
+                );
+              })}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[var(--tx-text-muted)]" />
+          </div>
+
+          {/* Tablet/Desktop segmented filter tabs */}
+          <div className="hidden w-fit flex-wrap items-center gap-1 rounded-lg border border-[var(--tx-border)] bg-[var(--tx-bg)] p-1 sm:inline-flex">
             {STATUS_TABS.map((status) => {
               const count =
                 status === "ALL"

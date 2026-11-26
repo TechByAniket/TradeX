@@ -127,8 +127,8 @@ export function PortfolioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 border-b border-[var(--tx-border)] pb-6 sm:flex-row sm:items-end">
-        <div className="space-y-2">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--tx-border)] pb-6 sm:items-end">
+        <div className="min-w-0 flex-1 space-y-2">
           <p className="text-xs font-medium tracking-[0.02em] text-[var(--tx-text-muted)]">
             Virtual INR Account · Real-Time Valuation
           </p>
@@ -147,13 +147,16 @@ export function PortfolioPage() {
         <Button
           variant="secondary"
           size="sm"
+          aria-label="Refresh portfolio"
+          title="Refresh"
           onClick={() => {
             void loadPortfolio();
           }}
           disabled={loading}
+          className="w-8 shrink-0 px-0 sm:w-auto sm:px-3"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          Refresh
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
@@ -174,70 +177,74 @@ export function PortfolioPage() {
 
       {/* Portfolio Summary Cards */}
       {loading && !liveView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, idx) => (
-            <Card key={idx}>
-              <CardContent className="pt-5">
-                <div className="h-3 w-24 animate-pulse rounded bg-[var(--tx-surface-elevated)]" />
-                <div className="mt-3.5 h-6 w-28 animate-pulse rounded bg-[var(--tx-surface-elevated)]" />
+            <Card key={idx} className={idx === 4 ? "col-span-2 sm:col-span-1" : undefined}>
+              <CardContent className="px-3.5 pt-4 pb-4 sm:px-6 sm:pt-5 sm:pb-5">
+                <div className="h-3 w-20 animate-pulse rounded bg-[var(--tx-surface-elevated)] sm:w-24" />
+                <div className="mt-3.5 h-6 w-24 animate-pulse rounded bg-[var(--tx-surface-elevated)] sm:w-28" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : liveView ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
           <Card interactive>
-            <CardHeader className="pb-1.5">
+            <CardHeader className="px-3.5 pt-4 pb-1.5 sm:px-6 sm:pt-5">
               <CardTitle className="tx-label">Available Cash</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)]">
+            <CardContent className="px-3.5 pb-4 sm:px-6 sm:pb-5">
+              <p className="truncate text-base font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)] sm:text-xl">
                 {formatINR(liveView.summary.cashBalance)}
               </p>
             </CardContent>
           </Card>
 
           <Card interactive>
-            <CardHeader className="pb-1.5">
+            <CardHeader className="px-3.5 pt-4 pb-1.5 sm:px-6 sm:pt-5">
               <CardTitle className="tx-label">Invested Value</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)]">
+            <CardContent className="px-3.5 pb-4 sm:px-6 sm:pb-5">
+              <p className="truncate text-base font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)] sm:text-xl">
                 {formatINR(liveView.summary.totalInvestedValue)}
               </p>
             </CardContent>
           </Card>
 
           <Card interactive>
-            <CardHeader className="pb-1.5">
+            <CardHeader className="px-3.5 pt-4 pb-1.5 sm:px-6 sm:pt-5">
               <CardTitle className="tx-label">Holdings Value</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)]">
+            <CardContent className="px-3.5 pb-4 sm:px-6 sm:pb-5">
+              <p className="truncate text-base font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)] sm:text-xl">
                 {formatINR(liveView.summary.totalCurrentHoldingsValue)}
               </p>
             </CardContent>
           </Card>
 
           <Card variant="elevated" interactive>
-            <CardHeader className="pb-1.5">
+            <CardHeader className="px-3.5 pt-4 pb-1.5 sm:px-6 sm:pt-5">
               <CardTitle className="tx-label">Total Portfolio</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-xl font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)]">
+            <CardContent className="px-3.5 pb-4 sm:px-6 sm:pb-5">
+              <p className="truncate text-base font-bold tracking-[-0.02em] tabular-nums text-[var(--tx-text)] sm:text-xl">
                 {formatINR(liveView.summary.totalPortfolioValue)}
               </p>
             </CardContent>
           </Card>
 
-          <Card variant="glass" interactive>
-            <CardHeader className="pb-1.5">
+          <Card
+            variant="glass"
+            interactive
+            className="col-span-2 sm:col-span-1"
+          >
+            <CardHeader className="px-3.5 pt-4 pb-1.5 sm:px-6 sm:pt-5">
               <CardTitle className="tx-label">Unrealized P&amp;L</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1.5">
+            <CardContent className="space-y-1.5 px-3.5 pb-4 sm:px-6 sm:pb-5">
               <p
                 className={cn(
-                  "text-xl font-bold tracking-[-0.02em] tabular-nums",
+                  "text-lg font-bold tracking-[-0.02em] tabular-nums sm:text-xl",
                   pnlPositive
                     ? "text-[var(--tx-gain)]"
                     : pnlNegative
