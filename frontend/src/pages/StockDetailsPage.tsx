@@ -266,6 +266,22 @@ export function StockDetailsPage() {
         </CardContent>
       </Card>
 
+      {/* Price Chart + Trading Panel */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <StockPriceChart
+            symbol={stock.symbol}
+            history={history}
+            loading={historyLoading}
+            isPositive={!isDown}
+            error={historyError}
+          />
+        </div>
+        <div className="lg:col-span-4">
+          <OrderTicket stock={stock} initialSide={initialSide} />
+        </div>
+      </div>
+
       {/* Supported Metrics Grid */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card interactive>
@@ -311,22 +327,6 @@ export function StockDetailsPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Price Chart + Trading Panel */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <StockPriceChart
-            symbol={stock.symbol}
-            history={history}
-            loading={historyLoading}
-            isPositive={!isDown}
-            error={historyError}
-          />
-        </div>
-        <div className="lg:col-span-4">
-          <OrderTicket stock={stock} initialSide={initialSide} />
-        </div>
       </div>
     </div>
   );
