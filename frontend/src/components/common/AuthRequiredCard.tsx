@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import {
@@ -114,6 +115,23 @@ export function AuthRequiredCard({
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
+
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+              Need an account or Google Sign-In?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+              >
+                Register
+              </Link>{" "}
+              or{" "}
+              <Link
+                to="/login"
+                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+              >
+                Use Google SSO
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>

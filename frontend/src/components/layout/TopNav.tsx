@@ -75,14 +75,14 @@ export function TopNav({ onOpenMobileMenu }: TopNavProps) {
         </button>
 
         <Link
-          to="/settings"
+          to={user ? "/settings" : "/login"}
           className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
             <User className="h-3.5 w-3.5" />
           </span>
           <span className="hidden max-w-28 truncate sm:inline">
-            {user?.name ?? "Account"}
+            {user?.name ?? "Sign in"}
           </span>
         </Link>
       </div>

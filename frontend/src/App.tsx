@@ -4,13 +4,15 @@ import { MarketProvider } from "@/context/MarketContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/common/Button";
-import { OverviewPage } from "@/pages/OverviewPage";
+import { AuthPage } from "@/pages/AuthPage";
 import { ExploreStocksPage } from "@/pages/ExploreStocksPage";
-import { StockDetailsPage } from "@/pages/StockDetailsPage";
-import { PortfolioPage } from "@/pages/PortfolioPage";
 import { OrdersPage } from "@/pages/OrdersPage";
+import { OverviewPage } from "@/pages/OverviewPage";
+import { PortfolioPage } from "@/pages/PortfolioPage";
+import { SettingsPage } from "@/pages/SettingsPage";
+import { StockDetailsPage } from "@/pages/StockDetailsPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
-import { ShellRoutePage } from "@/pages/ShellRoutePage";
+import { WatchlistPage } from "@/pages/WatchlistPage";
 
 function NotFoundPage() {
   return (
@@ -34,38 +36,25 @@ export function App() {
       <AuthProvider>
         <MarketProvider>
           <BrowserRouter>
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route path="/" element={<OverviewPage />} />
-              <Route path="/stocks" element={<ExploreStocksPage />} />
-              <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/transactions" element={<TransactionsPage />} />
-              <Route
-                path="/watchlist"
-                element={
-                  <ShellRoutePage
-                    title="Watchlist"
-                    description="Tracked stocks and quick market access."
-                    milestone="Group 7"
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ShellRoutePage
-                    title="Settings"
-                    description="Account profile, authentication session, and display preferences."
-                    milestone="Group 7"
-                  />
-                }
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<OverviewPage />} />
+                <Route path="/login" element={<AuthPage mode="login" />} />
+                <Route
+                  path="/register"
+                  element={<AuthPage mode="register" />}
+                />
+                <Route path="/stocks" element={<ExploreStocksPage />} />
+                <Route path="/stocks/:symbol" element={<StockDetailsPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/transactions" element={<TransactionsPage />} />
+                <Route path="/watchlist" element={<WatchlistPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
         </MarketProvider>
       </AuthProvider>
     </ThemeProvider>
