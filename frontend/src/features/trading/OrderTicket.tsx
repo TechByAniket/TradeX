@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Lock, X } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import {
@@ -58,10 +59,30 @@ export function OrderTicket({
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
+  const closeOrderModal = useCallback(() => {
+    if (submitting) return;
+    setConfirming(false);
+    setOrderResult(null);
+  }, [submitting]);
+
   useEffect(() => {
     setSide(initialSide);
     setConfirming(false);
+    setOrderResult(null);
   }, [initialSide, stock.symbol]);
+
+  useEffect(() => {
+    if (!confirming) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !submitting) {
+        closeOrderModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [confirming, submitting, closeOrderModal]);
 
   const loadPortfolio = useCallback(async () => {
     if (!user) {
@@ -142,7 +163,6 @@ export function OrderTicket({
           : await placeSellOrder({ symbol: stock.symbol, quantity: parsedQty });
 
       setOrderResult(result);
-      setConfirming(false);
       await Promise.all([loadPortfolio(), refreshAuth()]);
     } catch (err) {
       setOrderError(
@@ -373,128 +393,255 @@ export function OrderTicket({
               </div>
             )}
 
-            <AnimatePresence mode="wait">
-              {!confirming ? (
-                <motion.div
-                  key="review-trigger"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.14, ease: "easeOut" }}
-                >
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    size="lg"
-                    disabled={Boolean(validationError) || submitting}
-                    className={cn("w-full border-0", sideActionClasses)}
-                  >
-                    Review {side} Order
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="confirm-panel"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                  className="tx-glass space-y-3 rounded-xl p-3.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-[var(--tx-text)]">
-                      Confirm {side} {formatNumber(parsedQty)} {stock.symbol}
-                    </p>
-                    <Badge variant={side === "BUY" ? "gain" : "loss"} size="sm">
-                      {side}
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-[var(--tx-text-secondary)]">
-                    Estimated{" "}
-                    <span className="font-semibold tabular-nums text-[var(--tx-text)]">
-                      {formatINR(estimatedValue)}
-                    </span>
-                    . Execution price is validated and finalized by the backend at
-                    submission.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={submitting}
-                      onClick={() => setConfirming(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={submitting}
-                      onClick={() => {
-                        void handleConfirmOrder();
-                      }}
-                      className={cn("border-0", sideActionClasses)}
-                    >
-                      {submitting ? "Submitting..." : `Confirm ${side}`}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {orderResult && (
-                <motion.div
-                  key={orderResult.order.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-2.5 rounded-xl border border-[var(--tx-gain-border)] bg-[var(--tx-gain-bg)] p-3.5 text-xs text-[var(--tx-text)]"
-                >
-                  <div className="flex items-center justify-between gap-2 font-semibold">
-                    <span className="inline-flex items-center gap-1.5 text-[var(--tx-gain)]">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Order {orderResult.order.status}
-                    </span>
-                    <span className="text-[11px] tracking-[0.04em] text-[var(--tx-text-secondary)]">
-                      {orderResult.order.orderType} · {orderResult.order.symbol}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 text-[11px] text-[var(--tx-text-secondary)]">
-                    <div className="flex justify-between">
-                      <span>Quantity</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatNumber(orderResult.order.quantity)} shares
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Execution Price</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatINR(orderResult.order.executionPrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-medium">
-                      <span>Total Amount</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatINR(orderResult.order.totalAmount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t border-[var(--tx-gain-border)] pt-1.5 font-medium">
-                      <span>Updated Cash</span>
-                      <span className="tabular-nums text-[var(--tx-gain)]">
-                        {formatINR(orderResult.cashBalance)}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="lg"
+              disabled={Boolean(validationError) || submitting}
+              className={cn("w-full border-0", sideActionClasses)}
+            >
+              {side} {stock.symbol}
+            </Button>
           </form>
         )}
       </CardContent>
+
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {confirming && (
+                <motion.div
+                  key="order-confirm-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.16, ease: "easeOut" }}
+                  onClick={closeOrderModal}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs"
+                >
+                  <motion.div
+                    key={
+                      orderResult
+                        ? `order-executed-${orderResult.order.id}`
+                        : "order-confirm-dialog"
+                    }
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="order-modal-title"
+                    initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                    onClick={(event) => event.stopPropagation()}
+                    className="w-full max-w-md space-y-5 rounded-2xl border border-[var(--tx-border-strong)] bg-[var(--tx-surface-elevated)] p-6 shadow-[var(--tx-shadow-glass)]"
+                  >
+                    {!orderResult ? (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h3
+                                id="order-modal-title"
+                                className="text-base font-semibold tracking-tight text-[var(--tx-text)]"
+                              >
+                                Confirm {side} Order
+                              </h3>
+                              <Badge
+                                variant={side === "BUY" ? "gain" : "loss"}
+                                size="sm"
+                              >
+                                {side}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-[var(--tx-text-secondary)]">
+                              {stock.symbol} · {stock.companyName}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            aria-label="Close order confirmation"
+                            disabled={submitting}
+                            onClick={closeOrderModal}
+                            className="rounded-lg p-1.5 text-[var(--tx-text-muted)] transition-colors hover:bg-[var(--tx-surface)] hover:text-[var(--tx-text)] disabled:pointer-events-none disabled:opacity-40"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2.5 rounded-xl border border-[var(--tx-border)] bg-[var(--tx-surface)] p-4 text-xs">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[var(--tx-text-secondary)]">
+                              Order Type
+                            </span>
+                            <span className="font-semibold text-[var(--tx-text)]">
+                              MARKET
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[var(--tx-text-secondary)]">
+                              Quantity
+                            </span>
+                            <span className="font-semibold tabular-nums text-[var(--tx-text)]">
+                              {formatNumber(parsedQty)}{" "}
+                              {parsedQty === 1 ? "share" : "shares"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[var(--tx-text-secondary)]">
+                              Reference Price
+                            </span>
+                            <span className="font-medium tabular-nums text-[var(--tx-text)]">
+                              {formatINR(stock.currentPrice)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 border-t border-[var(--tx-border)] pt-2.5">
+                            <span className="font-medium text-[var(--tx-text)]">
+                              Estimated Order Value
+                            </span>
+                            <span className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                              {formatINR(estimatedValue)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 text-[11px] text-[var(--tx-text-muted)]">
+                            <span>
+                              {side === "BUY"
+                                ? "Available Cash"
+                                : "Available Holdings"}
+                            </span>
+                            <span className="tabular-nums text-[var(--tx-text-secondary)]">
+                              {side === "BUY"
+                                ? formatINR(availableCash)
+                                : `${formatNumber(availableShares)} shares`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] leading-relaxed text-[var(--tx-text-secondary)]">
+                          Execution price is validated and finalized by the
+                          backend at submission.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="md"
+                            disabled={submitting}
+                            onClick={closeOrderModal}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="md"
+                            disabled={submitting}
+                            onClick={() => {
+                              void handleConfirmOrder();
+                            }}
+                            className={cn("border-0", sideActionClasses)}
+                          >
+                            {submitting ? "Submitting..." : `Confirm ${side}`}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-5 w-5 text-[var(--tx-gain)]" />
+                              <h3
+                                id="order-modal-title"
+                                className="text-base font-semibold tracking-tight text-[var(--tx-text)]"
+                              >
+                                Order {orderResult.order.status}
+                              </h3>
+                              <Badge
+                                variant={
+                                  orderResult.order.orderType === "BUY"
+                                    ? "gain"
+                                    : "loss"
+                                }
+                                size="sm"
+                              >
+                                {orderResult.order.orderType}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-[var(--tx-text-secondary)]">
+                              {orderResult.order.symbol} · {stock.companyName}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            aria-label="Close order receipt"
+                            disabled={submitting}
+                            onClick={closeOrderModal}
+                            className="rounded-lg p-1.5 text-[var(--tx-text-muted)] transition-colors hover:bg-[var(--tx-surface)] hover:text-[var(--tx-text)] disabled:pointer-events-none disabled:opacity-40"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2.5 rounded-xl border border-[var(--tx-gain-border)] bg-[var(--tx-gain-bg)] p-4 text-xs text-[var(--tx-text)]">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[var(--tx-text-secondary)]">
+                              Quantity
+                            </span>
+                            <span className="font-semibold tabular-nums text-[var(--tx-text)]">
+                              {formatNumber(orderResult.order.quantity)}{" "}
+                              {orderResult.order.quantity === 1
+                                ? "share"
+                                : "shares"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[var(--tx-text-secondary)]">
+                              Execution Price
+                            </span>
+                            <span className="font-medium tabular-nums text-[var(--tx-text)]">
+                              {formatINR(orderResult.order.executionPrice)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-medium text-[var(--tx-text)]">
+                              Total Amount
+                            </span>
+                            <span className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                              {formatINR(orderResult.order.totalAmount)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 border-t border-[var(--tx-gain-border)] pt-2.5 font-medium">
+                            <span className="text-[var(--tx-text)]">
+                              Updated Cash
+                            </span>
+                            <span className="text-sm font-semibold tabular-nums text-[var(--tx-gain)]">
+                              {formatINR(orderResult.cashBalance)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="md"
+                          disabled={submitting}
+                          onClick={closeOrderModal}
+                          className="w-full"
+                        >
+                          Done
+                        </Button>
+                      </>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
+          )
+        : null}
     </Card>
   );
 }
