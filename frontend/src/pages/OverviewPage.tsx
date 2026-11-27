@@ -13,8 +13,8 @@ import { MarketBadge } from "@/components/common/MarketBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useMarket } from "@/context/MarketContext";
 import { MarketMoversCard } from "@/features/dashboard/MarketMoversCard";
+import { MarketQuotesTable } from "@/features/dashboard/MarketQuotesTable";
 import { MarketSummaryCards } from "@/features/dashboard/MarketSummaryCards";
-import { WatchlistPreviewTable } from "@/features/dashboard/WatchlistPreviewTable";
 import { cn } from "@/lib/utils";
 
 function formatTodayDate(): string {
@@ -187,10 +187,10 @@ export function OverviewPage() {
         connectionStatus={connectionStatus}
       />
 
-      {/* Market watchlist preview & market movers */}
+      {/* Market quotes table & market movers */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <WatchlistPreviewTable stocks={stocks} loading={loading} />
+          <MarketQuotesTable stocks={stocks} loading={loading} />
         </div>
         <div className="lg:col-span-4">
           <MarketMoversCard stocks={stocks} loading={loading} />

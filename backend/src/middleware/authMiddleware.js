@@ -1,65 +1,30 @@
 import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.js";
+import { createHttpError } from "../utils/httpError.js";
 
 export async function authenticate(req, _res, next) {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      const error = new Error("Authentication token is required");
-      error.statusCode = 401;
-      return next(error);
-    }
-
-    const token = authHeader.slice(7).trim();
-    if (!token) {
-      const error = new Error("Authentication token is required");
-      error.statusCode = 401;
-      return next(error);
-    }
-
-    if (!process.env.JWT_SECRET) {
-      const error = new Error("JWT configuration is missing");
-      error.statusCode = 500;
-      return next(error);
-    }
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!token) return next(createHttpError("Authentication token is required", 401));
+    if (!process.env.JWT_SECRET) return next(createHttpError("JWT configuration is missing", 500));
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
-      const error = new Error("Invalid or expired token");
-      error.statusCode = 401;
-      return next(error);
+      return next(createHttpError("Invalid or expired token", 401));
     }
 
-    if (!decoded?.userId) {
-      const error = new Error("Invalid authentication token");
-      error.statusCode = 401;
-      return next(error);
-    }
+    if (!decoded?.userId) return next(createHttpError("Invalid authentication token", 401));
 
     const user = await prisma.users.findUnique({
       where: { id: decoded.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        is_active: true,
-        created_at: true,
-      },
+      select: { id: true, name: true, email: true, is_active: true, created_at: true },
     });
 
-    if (!user) {
-      const error = new Error("Invalid authentication token");
-      error.statusCode = 401;
-      return next(error);
-    }
-
-    if (!user.is_active) {
-      const error = new Error("Account is disabled");
-      error.statusCode = 403;
-      return next(error);
-    }
+    if (!user) return next(createHttpError("Invalid authentication token", 401));
+    if (!user.is_active) return next(createHttpError("Account is disabled", 403));
 
     req.user = user;
     next();
