@@ -9,6 +9,33 @@ function round2(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function toOptionalNumber(value) {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function extractNseSnapshotFromDbRow(stock) {
+  return {
+    industry: stock.industry || null,
+    nseReferencePrice: toOptionalNumber(stock.nse_reference_price),
+    nsePreviousClose: toOptionalNumber(stock.nse_previous_close),
+    nseChange: toOptionalNumber(stock.nse_change),
+    nsePercentChange: toOptionalNumber(stock.nse_percent_change),
+    nseDayHigh: toOptionalNumber(stock.nse_day_high),
+    nseDayLow: toOptionalNumber(stock.nse_day_low),
+    nseYearHigh52W: toOptionalNumber(stock.nse_year_high_52w),
+    nseYearLow52W: toOptionalNumber(stock.nse_year_low_52w),
+    nseVolume: toOptionalNumber(stock.nse_volume),
+    marketCapCr: toOptionalNumber(stock.market_cap_cr),
+    quoteDate: stock.quote_date || null,
+    quoteTime: stock.quote_time || null,
+    nseQuoteFetchedAt: stock.nse_quote_fetched_at
+      ? new Date(stock.nse_quote_fetched_at).toISOString()
+      : null,
+  };
+}
+
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -131,6 +158,7 @@ export class SimulatedMarketDataProvider {
         volume: profile.initialVolume,
         lastUpdated: nowIso,
         simulated: true,
+        ...extractNseSnapshotFromDbRow(stock),
       };
 
       this.cache.set(symbol, entry);
@@ -288,5 +316,103 @@ export class SimulatedMarketDataProvider {
       stock: { ...stock },
       history: points.map((p) => ({ ...p })),
     };
+  }
+
+  /**
+   * Updates in-memory simulated prices and reference fields for stocks that
+   * just succeeded in a manual NSE refresh, without restarting intervals.
+   */
+  rebaseStocks(updatedSnapshots = []) {
+    if (!this.initialized || !Array.isArray(updatedSnapshots) || updatedSnapshots.length === 0) {
+      return [];
+    }
+
+    const nowIso = new Date().toISOString();
+    const rebased = [];
+
+    for (const snap of updatedSnapshots) {
+      const symbol = snap?.symbol?.toUpperCase();
+      if (!symbol) continue;
+
+      const existing = this.cache.get(symbol);
+      const nextPrice = toOptionalNumber(snap.nseReferencePrice);
+      if (!existing || nextPrice === null || nextPrice <= 0) {
+        continue;
+      }
+
+      const rebasedPrice = round2(nextPrice);
+      const profile = this.profiles.get(symbol) || DEFAULT_STOCK_PROFILE;
+      this.profiles.set(symbol, {
+        ...profile,
+        referencePrice: rebasedPrice,
+      });
+
+      const fetchedPrevClose = toOptionalNumber(snap.nsePreviousClose);
+      const previousClose =
+        fetchedPrevClose !== null && fetchedPrevClose > 0
+          ? round2(fetchedPrevClose)
+          : rebasedPrice;
+
+      const change = round2(rebasedPrice - previousClose);
+      const changePercent = round2((change / previousClose) * 100);
+
+      const fetchedHigh = toOptionalNumber(snap.nseDayHigh);
+      const fetchedLow = toOptionalNumber(snap.nseDayLow);
+      const dayHigh =
+        fetchedHigh !== null && fetchedHigh > 0
+          ? Math.max(round2(fetchedHigh), rebasedPrice)
+          : rebasedPrice;
+      const dayLow =
+        fetchedLow !== null && fetchedLow > 0
+          ? Math.min(round2(fetchedLow), rebasedPrice)
+          : rebasedPrice;
+
+      const nextState = {
+        ...existing,
+        companyName: snap.companyName || existing.companyName,
+        currentPrice: rebasedPrice,
+        previousClose,
+        change,
+        changePercent,
+        dayHigh,
+        dayLow,
+        lastUpdated: nowIso,
+        industry: snap.industry ?? existing.industry ?? null,
+        nseReferencePrice: rebasedPrice,
+        nsePreviousClose: snap.nsePreviousClose ?? null,
+        nseChange: snap.nseChange ?? null,
+        nsePercentChange: snap.nsePercentChange ?? null,
+        nseDayHigh: snap.nseDayHigh ?? null,
+        nseDayLow: snap.nseDayLow ?? null,
+        nseYearHigh52W: snap.nseYearHigh52W ?? null,
+        nseYearLow52W: snap.nseYearLow52W ?? null,
+        nseVolume: snap.nseVolume ?? null,
+        marketCapCr: snap.marketCapCr ?? null,
+        quoteDate: snap.quoteDate ?? null,
+        quoteTime: snap.quoteTime ?? null,
+        nseQuoteFetchedAt: snap.nseQuoteFetchedAt ?? nowIso,
+      };
+
+      this.cache.set(symbol, nextState);
+
+      const points = this.history.get(symbol) || [];
+      points.push({ price: rebasedPrice, timestamp: nowIso });
+      if (points.length > this.historyLimit) {
+        points.splice(0, points.length - this.historyLimit);
+      }
+      this.history.set(symbol, points);
+
+      rebased.push(nextState);
+    }
+
+    if (rebased.length > 0 && this.onUpdate) {
+      try {
+        this.onUpdate(this.getLatestPrices(), nowIso);
+      } catch (error) {
+        console.error("[MarketSimulator] Rebase broadcast callback failed:", error.message);
+      }
+    }
+
+    return rebased;
   }
 }

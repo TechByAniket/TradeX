@@ -48,6 +48,13 @@ export const marketDataService = {
     }
   },
 
+  rebaseStocks(snapshots) {
+    if (typeof provider.rebaseStocks === "function") {
+      return provider.rebaseStocks(snapshots);
+    }
+    return [];
+  },
+
   getLatestPrices() {
     return provider.getLatestPrices();
   },

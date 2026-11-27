@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import { MARKET_CONFIG, ZYLA_STOCK_QUERIES } from "../../config/marketConfig.js";
+import marketDataService from "./marketDataService.js";
 
 // Simple in-memory lock to prevent concurrent Zyla refresh calls on this server
 let isRefreshing = false;
@@ -299,6 +300,8 @@ export async function refreshNseSnapshots({
           where: { id: dbStock.id },
           data: {
             company_name: mapped.companyName || dbStock.company_name,
+            current_price: mapped.nsePrice,
+            price_updated_at: fetchedAt,
             industry: mapped.industry,
             nse_reference_price: mapped.nsePrice,
             nse_previous_close: mapped.previousClose,
@@ -342,6 +345,7 @@ export async function refreshNseSnapshots({
     if (dbUpdates.length > 0) {
       await prisma.$transaction(dbUpdates);
       lastRefreshAtMs = fetchedAt.getTime();
+      marketDataService.rebaseStocks(updated);
     }
 
     return {
