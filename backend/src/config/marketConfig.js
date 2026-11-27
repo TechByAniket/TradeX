@@ -12,7 +12,32 @@ export const MARKET_CONFIG = {
   maxMovePercentPerTick: 0.0045, // max ±0.45% per tick
   maxDeviationPercent: 0.08, // ±8% bounds around reference price
   meanReversionStrength: 0.08, // pull back toward reference price
+  // Manual Zyla NSE snapshot configuration (never called automatically)
+  zylaApiUrl:
+    process.env.ZYLA_API_URL ||
+    "https://zylalabs.com/api/4521/indian+stock+exchange+api/5551/get+company+data+by+name",
+  zylaRefreshCooldownMs: parsePositiveInt(
+    process.env.ZYLA_REFRESH_COOLDOWN_MS,
+    60000
+  ),
+  zylaRequestTimeoutMs: parsePositiveInt(
+    process.env.ZYLA_REQUEST_TIMEOUT_MS,
+    25000
+  ),
 };
+
+export const ZYLA_STOCK_QUERIES = [
+  { symbol: "RELIANCE", query: "Reliance Industries", aliases: ["RELIANCE"] },
+  { symbol: "TCS", query: "TCS", aliases: ["TCS"] },
+  { symbol: "INFY", query: "Infosys", aliases: ["INFY"] },
+  { symbol: "HDFCBANK", query: "HDFC Bank", aliases: ["HDFCBANK"] },
+  { symbol: "ICICIBANK", query: "ICICI Bank", aliases: ["ICICIBANK"] },
+  { symbol: "SBIN", query: "State Bank of India", aliases: ["SBIN"] },
+  { symbol: "ITC", query: "ITC", aliases: ["ITC"] },
+  { symbol: "LT", query: "Larsen & Toubro", aliases: ["LT"] },
+  { symbol: "BHARTIARTL", query: "Bharti Airtel", aliases: ["BHARTIARTL"] },
+  { symbol: "TATAMOTORS", query: "Tata Motors", aliases: ["TATAMOTORS", "TMCV"] },
+];
 
 /**
  * Centralized simulation reference prices and per-stock characteristics.

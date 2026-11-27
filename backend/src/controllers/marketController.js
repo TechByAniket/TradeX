@@ -1,4 +1,8 @@
 import marketDataService from "../services/market/marketDataService.js";
+import {
+  getNseSnapshotStatus,
+  refreshNseSnapshots,
+} from "../services/market/zylaMarketService.js";
 
 export function getAllStocks(_req, res, next) {
   try {
@@ -41,6 +45,30 @@ export function getStockHistory(req, res, next) {
       lastUpdated: stock.lastUpdated,
       count: history.length,
       history,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getNseStatus(_req, res, next) {
+  try {
+    const status = await getNseSnapshotStatus();
+    res.status(200).json({
+      success: true,
+      ...status,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function refreshNseMarketPrices(_req, res, next) {
+  try {
+    const result = await refreshNseSnapshots();
+    res.status(200).json({
+      success: true,
+      ...result,
     });
   } catch (error) {
     next(error);
