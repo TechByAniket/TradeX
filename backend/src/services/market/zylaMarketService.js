@@ -231,29 +231,30 @@ export async function refreshNseSnapshots({
     );
   }
 
-  const latestFetchMs = await getPersistedLastFetchMs();
-  if (latestFetchMs > 0 && cooldownMs > 0) {
-    const elapsedMs = Date.now() - latestFetchMs;
-    if (elapsedMs < cooldownMs) {
-      const retryAfterSeconds = Math.ceil((cooldownMs - elapsedMs) / 1000);
-      throw createHttpError(
-        `NSE prices were recently updated. Please wait ${retryAfterSeconds}s before refreshing again.`,
-        429,
-        { retryAfterSeconds }
-      );
-    }
-  }
-
-  if (!apiKey) {
-    throw createHttpError(
-      "ZYLA_API_KEY is not configured in backend environment variables.",
-      503
-    );
-  }
-
+  // Acquire the lock synchronously before any async DB/network checks
   isRefreshing = true;
 
   try {
+    const latestFetchMs = await getPersistedLastFetchMs();
+    if (latestFetchMs > 0 && cooldownMs > 0) {
+      const elapsedMs = Date.now() - latestFetchMs;
+      if (elapsedMs < cooldownMs) {
+        const retryAfterSeconds = Math.ceil((cooldownMs - elapsedMs) / 1000);
+        throw createHttpError(
+          `NSE prices were recently updated. Please wait ${retryAfterSeconds}s before refreshing again.`,
+          429,
+          { retryAfterSeconds }
+        );
+      }
+    }
+
+    if (!apiKey) {
+      throw createHttpError(
+        "ZYLA_API_KEY is not configured in backend environment variables.",
+        503
+      );
+    }
+
     const dbStocks = await prisma.stocks.findMany({
       where: { exchange: "NSE" },
     });
