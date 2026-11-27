@@ -36,6 +36,55 @@ function extractNseSnapshotFromDbRow(stock) {
   };
 }
 
+function buildRebasedStockEntry(existing, snap, nowIso) {
+  const rebasedPrice = round2(toOptionalNumber(snap.nseReferencePrice));
+  const fetchedPrevClose = toOptionalNumber(snap.nsePreviousClose);
+  const previousClose =
+    fetchedPrevClose !== null && fetchedPrevClose > 0
+      ? round2(fetchedPrevClose)
+      : rebasedPrice;
+
+  const change = round2(rebasedPrice - previousClose);
+  const changePercent = round2((change / previousClose) * 100);
+
+  const fetchedHigh = toOptionalNumber(snap.nseDayHigh);
+  const fetchedLow = toOptionalNumber(snap.nseDayLow);
+  const dayHigh =
+    fetchedHigh !== null && fetchedHigh > 0
+      ? Math.max(round2(fetchedHigh), rebasedPrice)
+      : rebasedPrice;
+  const dayLow =
+    fetchedLow !== null && fetchedLow > 0
+      ? Math.min(round2(fetchedLow), rebasedPrice)
+      : rebasedPrice;
+
+  return {
+    ...existing,
+    companyName: snap.companyName || existing.companyName,
+    currentPrice: rebasedPrice,
+    previousClose,
+    change,
+    changePercent,
+    dayHigh,
+    dayLow,
+    lastUpdated: nowIso,
+    industry: snap.industry ?? existing.industry ?? null,
+    nseReferencePrice: rebasedPrice,
+    nsePreviousClose: snap.nsePreviousClose ?? null,
+    nseChange: snap.nseChange ?? null,
+    nsePercentChange: snap.nsePercentChange ?? null,
+    nseDayHigh: snap.nseDayHigh ?? null,
+    nseDayLow: snap.nseDayLow ?? null,
+    nseYearHigh52W: snap.nseYearHigh52W ?? null,
+    nseYearLow52W: snap.nseYearLow52W ?? null,
+    nseVolume: snap.nseVolume ?? null,
+    marketCapCr: snap.marketCapCr ?? null,
+    quoteDate: snap.quoteDate ?? null,
+    quoteTime: snap.quoteTime ?? null,
+    nseQuoteFetchedAt: snap.nseQuoteFetchedAt ?? nowIso,
+  };
+}
+
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -342,57 +391,9 @@ export class SimulatedMarketDataProvider {
 
       const rebasedPrice = round2(nextPrice);
       const profile = this.profiles.get(symbol) || DEFAULT_STOCK_PROFILE;
-      this.profiles.set(symbol, {
-        ...profile,
-        referencePrice: rebasedPrice,
-      });
+      this.profiles.set(symbol, { ...profile, referencePrice: rebasedPrice });
 
-      const fetchedPrevClose = toOptionalNumber(snap.nsePreviousClose);
-      const previousClose =
-        fetchedPrevClose !== null && fetchedPrevClose > 0
-          ? round2(fetchedPrevClose)
-          : rebasedPrice;
-
-      const change = round2(rebasedPrice - previousClose);
-      const changePercent = round2((change / previousClose) * 100);
-
-      const fetchedHigh = toOptionalNumber(snap.nseDayHigh);
-      const fetchedLow = toOptionalNumber(snap.nseDayLow);
-      const dayHigh =
-        fetchedHigh !== null && fetchedHigh > 0
-          ? Math.max(round2(fetchedHigh), rebasedPrice)
-          : rebasedPrice;
-      const dayLow =
-        fetchedLow !== null && fetchedLow > 0
-          ? Math.min(round2(fetchedLow), rebasedPrice)
-          : rebasedPrice;
-
-      const nextState = {
-        ...existing,
-        companyName: snap.companyName || existing.companyName,
-        currentPrice: rebasedPrice,
-        previousClose,
-        change,
-        changePercent,
-        dayHigh,
-        dayLow,
-        lastUpdated: nowIso,
-        industry: snap.industry ?? existing.industry ?? null,
-        nseReferencePrice: rebasedPrice,
-        nsePreviousClose: snap.nsePreviousClose ?? null,
-        nseChange: snap.nseChange ?? null,
-        nsePercentChange: snap.nsePercentChange ?? null,
-        nseDayHigh: snap.nseDayHigh ?? null,
-        nseDayLow: snap.nseDayLow ?? null,
-        nseYearHigh52W: snap.nseYearHigh52W ?? null,
-        nseYearLow52W: snap.nseYearLow52W ?? null,
-        nseVolume: snap.nseVolume ?? null,
-        marketCapCr: snap.marketCapCr ?? null,
-        quoteDate: snap.quoteDate ?? null,
-        quoteTime: snap.quoteTime ?? null,
-        nseQuoteFetchedAt: snap.nseQuoteFetchedAt ?? nowIso,
-      };
-
+      const nextState = buildRebasedStockEntry(existing, snap, nowIso);
       this.cache.set(symbol, nextState);
 
       const points = this.history.get(symbol) || [];

@@ -52,6 +52,44 @@ function findMetricByKey(list, candidateKeys) {
   return null;
 }
 
+function verifyMatchingSymbol(returnedSymbol, targetEntry) {
+  if (!returnedSymbol) return;
+
+  const normalizedReturned = returnedSymbol.toUpperCase();
+  const allowedSymbols = new Set([
+    targetEntry.symbol.toUpperCase(),
+    ...(targetEntry.aliases || []).map((alias) => alias.toUpperCase()),
+  ]);
+
+  if (!allowedSymbols.has(normalizedReturned)) {
+    throw new Error(
+      `Returned NSE symbol "${normalizedReturned}" does not match ${targetEntry.symbol}`
+    );
+  }
+}
+
+function computeConsistentChanges(nsePrice, previousClose, rawChange, rawPercentChange) {
+  if (previousClose === null) {
+    return {
+      change: rawChange,
+      percentChange: rawPercentChange,
+    };
+  }
+
+  // Always verify change & percentChange against nsePrice and previousClose
+  const computedChange = round2(nsePrice - previousClose);
+  const finalChange =
+    rawChange === null || Math.abs(rawChange - computedChange) > 0.05
+      ? computedChange
+      : rawChange;
+  const finalPercentChange = round2((computedChange / previousClose) * 100);
+
+  return {
+    change: finalChange,
+    percentChange: finalPercentChange,
+  };
+}
+
 /**
  * Extracts and validates only the allowed NSE snapshot fields from a Zyla response.
  * Throws an error if required NSE price data is missing or invalid, or if symbol mismatches.
@@ -66,52 +104,20 @@ export function mapAndValidateZylaResponse(payload, targetEntry) {
       ? payload.data
       : payload;
 
-  const currentPriceObj =
-    root.currentPrice && typeof root.currentPrice === "object"
-      ? root.currentPrice
-      : {};
-  const reusable =
-    root.stockDetailsReusableData &&
-    typeof root.stockDetailsReusableData === "object"
-      ? root.stockDetailsReusableData
-      : {};
-  const profile =
-    root.companyProfile && typeof root.companyProfile === "object"
-      ? root.companyProfile
-      : {};
-  const keyMetrics =
-    root.keyMetrics && typeof root.keyMetrics === "object"
-      ? root.keyMetrics
-      : {};
-  const priceAndVolume = Array.isArray(keyMetrics.priceandVolume)
-    ? keyMetrics.priceandVolume
+  const currentPriceObj = root.currentPrice && typeof root.currentPrice === "object" ? root.currentPrice : {};
+  const reusable = root.stockDetailsReusableData && typeof root.stockDetailsReusableData === "object" ? root.stockDetailsReusableData : {};
+  const profile = root.companyProfile && typeof root.companyProfile === "object" ? root.companyProfile : {};
+  const priceAndVolume = Array.isArray(root.keyMetrics?.priceandVolume)
+    ? root.keyMetrics.priceandVolume
     : [];
 
-  // Match NSE symbol against our configured symbol or aliases to avoid wrong-company overwrites
-  const returnedSymbol = pickFirstText(
-    profile.exchangeCodeNse,
-    root.symbol,
-    root.tickerId
-  );
-
-  if (returnedSymbol) {
-    const normalizedReturned = returnedSymbol.toUpperCase();
-    const allowedSymbols = new Set([
-      targetEntry.symbol.toUpperCase(),
-      ...(targetEntry.aliases || []).map((a) => a.toUpperCase()),
-    ]);
-    if (!allowedSymbols.has(normalizedReturned)) {
-      throw new Error(
-        `Returned NSE symbol "${normalizedReturned}" does not match ${targetEntry.symbol}`
-      );
-    }
-  }
+  const returnedSymbol = pickFirstText(profile.exchangeCodeNse, root.symbol, root.tickerId);
+  verifyMatchingSymbol(returnedSymbol, targetEntry);
 
   const nsePrice = toNullableNumber(
     currentPriceObj.NSE ??
       reusable.price ??
-      (typeof root.currentPrice === "number" ||
-      typeof root.currentPrice === "string"
+      (typeof root.currentPrice === "number" || typeof root.currentPrice === "string"
         ? root.currentPrice
         : null)
   );
@@ -120,40 +126,25 @@ export function mapAndValidateZylaResponse(payload, targetEntry) {
     throw new Error(`Invalid or missing NSE price for ${targetEntry.symbol}`);
   }
 
-  const previousClose = toNullableNumber(reusable.close ?? root.previousClose);
-  const validPrevClose =
-    previousClose !== null && previousClose > 0 ? previousClose : null;
+  const rawPrevClose = toNullableNumber(reusable.close ?? root.previousClose);
+  const previousClose = rawPrevClose !== null && rawPrevClose > 0 ? round2(rawPrevClose) : null;
 
-  // Verify absolute change and percentage change consistently against nsePrice & previousClose
-  let change = toNullableNumber(root.change ?? root.priceChange);
-  let percentChange = toNullableNumber(
-    root.percentChange ?? reusable.percentChange
+  const { change, percentChange } = computeConsistentChanges(
+    nsePrice,
+    previousClose,
+    toNullableNumber(root.change ?? root.priceChange),
+    toNullableNumber(root.percentChange ?? reusable.percentChange)
   );
 
-  if (validPrevClose !== null) {
-    const computedChange = round2(nsePrice - validPrevClose);
-    if (change === null || Math.abs(change - computedChange) > 0.05) {
-      change = computedChange;
-    }
-    percentChange = round2((computedChange / validPrevClose) * 100);
-  }
-
-  const companyName = pickFirstText(
-    root.companyName,
-    profile.companyName,
-    root.name
-  );
-  const industry = pickFirstText(root.industry, profile.industry);
+  const symbol = targetEntry.symbol.toUpperCase();
 
   return {
-    symbol: targetEntry.symbol.toUpperCase(),
-    nseSymbol: returnedSymbol
-      ? returnedSymbol.toUpperCase()
-      : targetEntry.symbol.toUpperCase(),
-    companyName,
-    industry,
+    symbol,
+    nseSymbol: returnedSymbol ? returnedSymbol.toUpperCase() : symbol,
+    companyName: pickFirstText(root.companyName, profile.companyName, root.name),
+    industry: pickFirstText(root.industry, profile.industry),
     nsePrice: round2(nsePrice),
-    previousClose: validPrevClose !== null ? round2(validPrevClose) : null,
+    previousClose,
     change,
     percentChange,
     dayHigh: toNullableNumber(reusable.high ?? root.dayHigh),
@@ -214,6 +205,71 @@ export async function getNseSnapshotStatus() {
   };
 }
 
+async function enforceCooldownNotActive(cooldownMs) {
+  if (cooldownMs <= 0) return;
+
+  const latestFetchMs = await getPersistedLastFetchMs();
+  if (latestFetchMs <= 0) return;
+
+  const elapsedMs = Date.now() - latestFetchMs;
+  if (elapsedMs < cooldownMs) {
+    const retryAfterSeconds = Math.ceil((cooldownMs - elapsedMs) / 1000);
+    throw createHttpError(
+      `NSE prices were recently updated. Please wait ${retryAfterSeconds}s before refreshing again.`,
+      429,
+      { retryAfterSeconds }
+    );
+  }
+}
+
+function buildStockDbUpdate(dbStock, mapped, fetchedAt) {
+  return prisma.stocks.update({
+    where: { id: dbStock.id },
+    data: {
+      company_name: mapped.companyName || dbStock.company_name,
+      current_price: mapped.nsePrice,
+      price_updated_at: fetchedAt,
+      industry: mapped.industry,
+      nse_reference_price: mapped.nsePrice,
+      nse_previous_close: mapped.previousClose,
+      nse_change: mapped.change,
+      nse_percent_change: mapped.percentChange,
+      nse_day_high: mapped.dayHigh,
+      nse_day_low: mapped.dayLow,
+      nse_year_high_52w: mapped.yearHigh52W,
+      nse_year_low_52w: mapped.yearLow52W,
+      nse_volume: mapped.volume,
+      market_cap_cr: mapped.marketCapCr,
+      quote_date: mapped.quoteDate,
+      quote_time: mapped.quoteTime,
+      nse_quote_fetched_at: fetchedAt,
+      updated_at: fetchedAt,
+    },
+  });
+}
+
+function buildUpdatedStockSummary(dbStock, mapped, fetchedAt) {
+  return {
+    id: dbStock.id,
+    symbol: mapped.symbol,
+    companyName: mapped.companyName || dbStock.company_name,
+    industry: mapped.industry,
+    nseReferencePrice: mapped.nsePrice,
+    nsePreviousClose: mapped.previousClose,
+    nseChange: mapped.change,
+    nsePercentChange: mapped.percentChange,
+    nseDayHigh: mapped.dayHigh,
+    nseDayLow: mapped.dayLow,
+    nseYearHigh52W: mapped.yearHigh52W,
+    nseYearLow52W: mapped.yearLow52W,
+    nseVolume: mapped.volume,
+    marketCapCr: mapped.marketCapCr,
+    quoteDate: mapped.quoteDate,
+    quoteTime: mapped.quoteTime,
+    nseQuoteFetchedAt: fetchedAt.toISOString(),
+  };
+}
+
 /**
  * Manually refreshes NSE reference snapshots for all configured stocks in parallel.
  * Never called automatically on startup or in background intervals.
@@ -235,18 +291,7 @@ export async function refreshNseSnapshots({
   isRefreshing = true;
 
   try {
-    const latestFetchMs = await getPersistedLastFetchMs();
-    if (latestFetchMs > 0 && cooldownMs > 0) {
-      const elapsedMs = Date.now() - latestFetchMs;
-      if (elapsedMs < cooldownMs) {
-        const retryAfterSeconds = Math.ceil((cooldownMs - elapsedMs) / 1000);
-        throw createHttpError(
-          `NSE prices were recently updated. Please wait ${retryAfterSeconds}s before refreshing again.`,
-          429,
-          { retryAfterSeconds }
-        );
-      }
-    }
+    await enforceCooldownNotActive(cooldownMs);
 
     if (!apiKey) {
       throw createHttpError(
@@ -296,51 +341,8 @@ export async function refreshNseSnapshots({
         continue;
       }
 
-      dbUpdates.push(
-        prisma.stocks.update({
-          where: { id: dbStock.id },
-          data: {
-            company_name: mapped.companyName || dbStock.company_name,
-            current_price: mapped.nsePrice,
-            price_updated_at: fetchedAt,
-            industry: mapped.industry,
-            nse_reference_price: mapped.nsePrice,
-            nse_previous_close: mapped.previousClose,
-            nse_change: mapped.change,
-            nse_percent_change: mapped.percentChange,
-            nse_day_high: mapped.dayHigh,
-            nse_day_low: mapped.dayLow,
-            nse_year_high_52w: mapped.yearHigh52W,
-            nse_year_low_52w: mapped.yearLow52W,
-            nse_volume: mapped.volume,
-            market_cap_cr: mapped.marketCapCr,
-            quote_date: mapped.quoteDate,
-            quote_time: mapped.quoteTime,
-            nse_quote_fetched_at: fetchedAt,
-            updated_at: fetchedAt,
-          },
-        })
-      );
-
-      updated.push({
-        id: dbStock.id,
-        symbol: mapped.symbol,
-        companyName: mapped.companyName || dbStock.company_name,
-        industry: mapped.industry,
-        nseReferencePrice: mapped.nsePrice,
-        nsePreviousClose: mapped.previousClose,
-        nseChange: mapped.change,
-        nsePercentChange: mapped.percentChange,
-        nseDayHigh: mapped.dayHigh,
-        nseDayLow: mapped.dayLow,
-        nseYearHigh52W: mapped.yearHigh52W,
-        nseYearLow52W: mapped.yearLow52W,
-        nseVolume: mapped.volume,
-        marketCapCr: mapped.marketCapCr,
-        quoteDate: mapped.quoteDate,
-        quoteTime: mapped.quoteTime,
-        nseQuoteFetchedAt: fetchedAt.toISOString(),
-      });
+      dbUpdates.push(buildStockDbUpdate(dbStock, mapped, fetchedAt));
+      updated.push(buildUpdatedStockSummary(dbStock, mapped, fetchedAt));
     }
 
     if (dbUpdates.length > 0) {
