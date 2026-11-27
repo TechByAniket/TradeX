@@ -1,23 +1,25 @@
 import prisma from "../config/prisma.js";
 import { Prisma } from "../../generated/prisma/client.ts";
+import { createHttpError } from "../utils/httpError.js";
 import marketDataService from "./market/marketDataService.js";
 
-function createHttpError(message, statusCode) {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-}
+const toMoney = (decimalVal) => Number(new Prisma.Decimal(decimalVal).toFixed(2));
 
-function parseQuantity(rawQuantity) {
-  const num = Number(rawQuantity);
-  if (!Number.isSafeInteger(num) || num <= 0) {
+function prepareOrder(symbol, rawQuantity) {
+  const qty = Number(rawQuantity);
+  if (!Number.isSafeInteger(qty) || qty <= 0) {
     throw createHttpError("Quantity must be a positive whole number", 400);
   }
-  return {
-    qtyBigInt: BigInt(num),
-    qtyDecimal: new Prisma.Decimal(num),
-    qtyNumber: num,
-  };
+
+  const marketStock = marketDataService.getLatestPrice(symbol);
+  const executionPrice = new Prisma.Decimal(marketStock.currentPrice).toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
+  const totalAmount = executionPrice.mul(qty).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+
+  if (totalAmount.lte(0)) {
+    throw createHttpError("Calculated order amount must be positive", 400);
+  }
+
+  return { qtyBigInt: BigInt(qty), marketStock, executionPrice, totalAmount };
 }
 
 function serializeOrder(order, symbol, companyName) {
@@ -27,277 +29,141 @@ function serializeOrder(order, symbol, companyName) {
     companyName,
     orderType: order.order_type,
     quantity: Number(order.quantity),
-    executionPrice: Number(new Prisma.Decimal(order.execution_price).toFixed(2)),
-    totalAmount: Number(new Prisma.Decimal(order.total_amount).toFixed(2)),
+    executionPrice: toMoney(order.execution_price),
+    totalAmount: toMoney(order.total_amount),
     status: order.status,
     createdAt: order.created_at,
   };
 }
 
+async function recordOrderAndTransaction(tx, {
+  userId, portfolio, marketStock, orderType, transactionType, qtyBigInt, executionPrice, totalAmount, holding,
+}) {
+  const order = await tx.orders.create({
+    data: {
+      user_id: userId, stock_id: marketStock.id, order_type: orderType,
+      quantity: qtyBigInt, execution_price: executionPrice, total_amount: totalAmount, status: "EXECUTED",
+    },
+  });
+
+  const transaction = await tx.transactions.create({
+    data: {
+      portfolio_id: portfolio.id, order_id: order.id, transaction_type: transactionType,
+      amount: totalAmount, balance_after: portfolio.cash_balance, currency: portfolio.currency,
+    },
+  });
+
+  return {
+    order: serializeOrder(order, marketStock.symbol, marketStock.companyName),
+    transaction: {
+      id: transaction.id,
+      type: transaction.transaction_type,
+      amount: toMoney(transaction.amount),
+      balanceAfter: toMoney(transaction.balance_after),
+      currency: transaction.currency,
+      createdAt: transaction.created_at,
+    },
+    holding,
+    cashBalance: toMoney(portfolio.cash_balance),
+  };
+}
+
 export async function placeBuyOrder(userId, { symbol, quantity }) {
-  const { qtyBigInt, qtyDecimal } = parseQuantity(quantity);
-  const marketStock = marketDataService.getLatestPrice(symbol);
-
-  const executionPrice = new Prisma.Decimal(marketStock.currentPrice).toDecimalPlaces(
-    4,
-    Prisma.Decimal.ROUND_HALF_UP
-  );
-  const totalAmount = executionPrice
-    .mul(qtyDecimal)
-    .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
-
-  if (totalAmount.lte(0)) {
-    throw createHttpError("Calculated order amount must be positive", 400);
-  }
+  const { qtyBigInt, marketStock, executionPrice, totalAmount } = prepareOrder(symbol, quantity);
 
   return prisma.$transaction(async (tx) => {
     const now = new Date();
-
-    const debitResult = await tx.portfolios.updateMany({
-      where: {
-        user_id: userId,
-        cash_balance: { gte: totalAmount },
-      },
-      data: {
-        cash_balance: { decrement: totalAmount },
-        updated_at: now,
-      },
+    const debit = await tx.portfolios.updateMany({
+      where: { user_id: userId, cash_balance: { gte: totalAmount } },
+      data: { cash_balance: { decrement: totalAmount }, updated_at: now },
     });
 
-    if (debitResult.count === 0) {
-      const portfolioExists = await tx.portfolios.findUnique({
-        where: { user_id: userId },
-        select: { id: true },
-      });
-      if (!portfolioExists) {
-        throw createHttpError("User portfolio not found", 404);
-      }
-      throw createHttpError("Insufficient cash balance for this buy order", 400);
+    if (debit.count === 0) {
+      const exists = await tx.portfolios.findUnique({ where: { user_id: userId }, select: { id: true } });
+      throw createHttpError(exists ? "Insufficient cash balance for this buy order" : "User portfolio not found", exists ? 400 : 404);
     }
 
-    const updatedPortfolio = await tx.portfolios.findUnique({
-      where: { user_id: userId },
-    });
-
-    const existingHolding = await tx.holdings.findUnique({
-      where: {
-        portfolio_id_stock_id: {
-          portfolio_id: updatedPortfolio.id,
-          stock_id: marketStock.id,
-        },
-      },
+    const portfolio = await tx.portfolios.findUnique({ where: { user_id: userId } });
+    const existing = await tx.holdings.findUnique({
+      where: { portfolio_id_stock_id: { portfolio_id: portfolio.id, stock_id: marketStock.id } },
     });
 
     let updatedHolding;
-    if (existingHolding) {
-      const prevQty = existingHolding.quantity;
-      const newQty = prevQty + qtyBigInt;
-      const prevCost = new Prisma.Decimal(existingHolding.average_price).mul(
-        prevQty.toString()
-      );
-      const newAvgPrice = prevCost
+    if (existing) {
+      const newQty = existing.quantity + qtyBigInt;
+      const newAvg = new Prisma.Decimal(existing.average_price)
+        .mul(existing.quantity.toString())
         .add(totalAmount)
         .div(newQty.toString())
         .toDecimalPlaces(4, Prisma.Decimal.ROUND_HALF_UP);
-
       updatedHolding = await tx.holdings.update({
-        where: { id: existingHolding.id },
-        data: {
-          quantity: newQty,
-          average_price: newAvgPrice,
-          updated_at: now,
-        },
+        where: { id: existing.id },
+        data: { quantity: newQty, average_price: newAvg, updated_at: now },
       });
     } else {
       updatedHolding = await tx.holdings.create({
-        data: {
-          portfolio_id: updatedPortfolio.id,
-          stock_id: marketStock.id,
-          quantity: qtyBigInt,
-          average_price: executionPrice,
-        },
+        data: { portfolio_id: portfolio.id, stock_id: marketStock.id, quantity: qtyBigInt, average_price: executionPrice },
       });
     }
 
-    const order = await tx.orders.create({
-      data: {
-        user_id: userId,
-        stock_id: marketStock.id,
-        order_type: "BUY",
-        quantity: qtyBigInt,
-        execution_price: executionPrice,
-        total_amount: totalAmount,
-        status: "EXECUTED",
-      },
-    });
-
-    const transaction = await tx.transactions.create({
-      data: {
-        portfolio_id: updatedPortfolio.id,
-        order_id: order.id,
-        transaction_type: "BUY_DEBIT",
-        amount: totalAmount,
-        balance_after: updatedPortfolio.cash_balance,
-        currency: updatedPortfolio.currency,
-      },
-    });
-
-    return {
-      order: serializeOrder(order, marketStock.symbol, marketStock.companyName),
-      transaction: {
-        id: transaction.id,
-        type: transaction.transaction_type,
-        amount: Number(new Prisma.Decimal(transaction.amount).toFixed(2)),
-        balanceAfter: Number(new Prisma.Decimal(transaction.balance_after).toFixed(2)),
-        currency: transaction.currency,
-        createdAt: transaction.created_at,
-      },
+    return recordOrderAndTransaction(tx, {
+      userId, portfolio, marketStock, orderType: "BUY", transactionType: "BUY_DEBIT",
+      qtyBigInt, executionPrice, totalAmount,
       holding: {
         symbol: marketStock.symbol,
         quantity: Number(updatedHolding.quantity),
-        averageBuyPrice: Number(
-          new Prisma.Decimal(updatedHolding.average_price).toFixed(2)
-        ),
+        averageBuyPrice: toMoney(updatedHolding.average_price),
       },
-      cashBalance: Number(new Prisma.Decimal(updatedPortfolio.cash_balance).toFixed(2)),
-    };
+    });
   });
 }
 
 export async function placeSellOrder(userId, { symbol, quantity }) {
-  const { qtyBigInt, qtyDecimal } = parseQuantity(quantity);
-  const marketStock = marketDataService.getLatestPrice(symbol);
-
-  const executionPrice = new Prisma.Decimal(marketStock.currentPrice).toDecimalPlaces(
-    4,
-    Prisma.Decimal.ROUND_HALF_UP
-  );
-  const totalAmount = executionPrice
-    .mul(qtyDecimal)
-    .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
-
-  if (totalAmount.lte(0)) {
-    throw createHttpError("Calculated order amount must be positive", 400);
-  }
+  const { qtyBigInt, marketStock, executionPrice, totalAmount } = prepareOrder(symbol, quantity);
 
   return prisma.$transaction(async (tx) => {
     const now = new Date();
+    const portfolio = await tx.portfolios.findUnique({ where: { user_id: userId } });
+    if (!portfolio) throw createHttpError("User portfolio not found", 404);
 
-    const portfolio = await tx.portfolios.findUnique({
-      where: { user_id: userId },
+    // Partial sell decrements (> qty); full sell deletes row to honor CHECK (quantity > 0)
+    const partial = await tx.holdings.updateMany({
+      where: { portfolio_id: portfolio.id, stock_id: marketStock.id, quantity: { gt: qtyBigInt } },
+      data: { quantity: { decrement: qtyBigInt }, updated_at: now },
     });
 
-    if (!portfolio) {
-      throw createHttpError("User portfolio not found", 404);
-    }
-
-    const partialSellResult = await tx.holdings.updateMany({
-      where: {
-        portfolio_id: portfolio.id,
-        stock_id: marketStock.id,
-        quantity: { gt: qtyBigInt },
-      },
-      data: {
-        quantity: { decrement: qtyBigInt },
-        updated_at: now,
-      },
-    });
-
-    let holdingSummary = null;
-    if (partialSellResult.count > 0) {
-      const remainingHolding = await tx.holdings.findUnique({
-        where: {
-          portfolio_id_stock_id: {
-            portfolio_id: portfolio.id,
-            stock_id: marketStock.id,
-          },
-        },
+    let holding = null;
+    if (partial.count > 0) {
+      const remaining = await tx.holdings.findUnique({
+        where: { portfolio_id_stock_id: { portfolio_id: portfolio.id, stock_id: marketStock.id } },
       });
-      if (remainingHolding) {
-        holdingSummary = {
-          symbol: marketStock.symbol,
-          quantity: Number(remainingHolding.quantity),
-          averageBuyPrice: Number(
-            new Prisma.Decimal(remainingHolding.average_price).toFixed(2)
-          ),
-        };
+      if (remaining) {
+        holding = { symbol: marketStock.symbol, quantity: Number(remaining.quantity), averageBuyPrice: toMoney(remaining.average_price) };
       }
     } else {
-      const fullSellResult = await tx.holdings.deleteMany({
-        where: {
-          portfolio_id: portfolio.id,
-          stock_id: marketStock.id,
-          quantity: qtyBigInt,
-        },
+      const full = await tx.holdings.deleteMany({
+        where: { portfolio_id: portfolio.id, stock_id: marketStock.id, quantity: qtyBigInt },
       });
-
-      if (fullSellResult.count === 0) {
-        throw createHttpError("Insufficient stock quantity to sell", 400);
-      }
+      if (full.count === 0) throw createHttpError("Insufficient stock quantity to sell", 400);
     }
 
     const updatedPortfolio = await tx.portfolios.update({
       where: { id: portfolio.id },
-      data: {
-        cash_balance: { increment: totalAmount },
-        updated_at: now,
-      },
+      data: { cash_balance: { increment: totalAmount }, updated_at: now },
     });
 
-    const order = await tx.orders.create({
-      data: {
-        user_id: userId,
-        stock_id: marketStock.id,
-        order_type: "SELL",
-        quantity: qtyBigInt,
-        execution_price: executionPrice,
-        total_amount: totalAmount,
-        status: "EXECUTED",
-      },
+    return recordOrderAndTransaction(tx, {
+      userId, portfolio: updatedPortfolio, marketStock, orderType: "SELL", transactionType: "SELL_CREDIT",
+      qtyBigInt, executionPrice, totalAmount, holding,
     });
-
-    const transaction = await tx.transactions.create({
-      data: {
-        portfolio_id: updatedPortfolio.id,
-        order_id: order.id,
-        transaction_type: "SELL_CREDIT",
-        amount: totalAmount,
-        balance_after: updatedPortfolio.cash_balance,
-        currency: updatedPortfolio.currency,
-      },
-    });
-
-    return {
-      order: serializeOrder(order, marketStock.symbol, marketStock.companyName),
-      transaction: {
-        id: transaction.id,
-        type: transaction.transaction_type,
-        amount: Number(new Prisma.Decimal(transaction.amount).toFixed(2)),
-        balanceAfter: Number(new Prisma.Decimal(transaction.balance_after).toFixed(2)),
-        currency: transaction.currency,
-        createdAt: transaction.created_at,
-      },
-      holding: holdingSummary,
-      cashBalance: Number(new Prisma.Decimal(updatedPortfolio.cash_balance).toFixed(2)),
-    };
   });
 }
 
 export async function getUserOrders(userId) {
   const orders = await prisma.orders.findMany({
     where: { user_id: userId },
-    include: {
-      stocks: {
-        select: {
-          symbol: true,
-          company_name: true,
-        },
-      },
-    },
+    include: { stocks: { select: { symbol: true, company_name: true } } },
     orderBy: { created_at: "desc" },
   });
-
-  return orders.map((order) =>
-    serializeOrder(order, order.stocks.symbol, order.stocks.company_name)
-  );
+  return orders.map((o) => serializeOrder(o, o.stocks.symbol, o.stocks.company_name));
 }

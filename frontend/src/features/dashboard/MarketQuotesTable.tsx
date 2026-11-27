@@ -13,20 +13,20 @@ import { LivePriceText } from "@/components/common/LivePriceText";
 import { cn, formatINR, formatPercent } from "@/lib/utils";
 import type { MarketStock } from "@/types/market";
 
-interface WatchlistPreviewTableProps {
+interface MarketQuotesTableProps {
   stocks: MarketStock[];
   loading: boolean;
 }
 
-export function WatchlistPreviewTable({
+export function MarketQuotesTable({
   stocks,
   loading,
-}: WatchlistPreviewTableProps) {
+}: MarketQuotesTableProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex-row items-center justify-between gap-4 border-b border-[var(--tx-border)] pb-4">
         <div className="min-w-0">
-          <CardTitle className="tx-heading-section">Market Watchlist</CardTitle>
+          <CardTitle className="tx-heading-section">Market Quotes</CardTitle>
           <CardDescription>
             Live simulated prices across tracked NSE symbols
           </CardDescription>

@@ -13,7 +13,6 @@ import { PortfolioPage } from "@/pages/PortfolioPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StockDetailsPage } from "@/pages/StockDetailsPage";
 import { TransactionsPage } from "@/pages/TransactionsPage";
-import { WatchlistPage } from "@/pages/WatchlistPage";
 
 function NotFoundPage() {
   return (
@@ -49,7 +48,6 @@ export function App() {
                   <Route path="/portfolio" element={<PortfolioPage />} />
                   <Route path="/orders" element={<OrdersPage />} />
                   <Route path="/transactions" element={<TransactionsPage />} />
-                  <Route path="/watchlist" element={<WatchlistPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>

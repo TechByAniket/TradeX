@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { Badge } from "@/components/common/Badge";
+import { OrderConfirmationModal } from "./OrderConfirmationModal";
 import { Button } from "@/components/common/Button";
 import {
   Card,
@@ -58,9 +58,16 @@ export function OrderTicket({
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
+  const closeOrderModal = useCallback(() => {
+    if (submitting) return;
+    setConfirming(false);
+    setOrderResult(null);
+  }, [submitting]);
+
   useEffect(() => {
     setSide(initialSide);
     setConfirming(false);
+    setOrderResult(null);
   }, [initialSide, stock.symbol]);
 
   const loadPortfolio = useCallback(async () => {
@@ -142,7 +149,6 @@ export function OrderTicket({
           : await placeSellOrder({ symbol: stock.symbol, quantity: parsedQty });
 
       setOrderResult(result);
-      setConfirming(false);
       await Promise.all([loadPortfolio(), refreshAuth()]);
     } catch (err) {
       setOrderError(
@@ -373,128 +379,35 @@ export function OrderTicket({
               </div>
             )}
 
-            <AnimatePresence mode="wait">
-              {!confirming ? (
-                <motion.div
-                  key="review-trigger"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.14, ease: "easeOut" }}
-                >
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    size="lg"
-                    disabled={Boolean(validationError) || submitting}
-                    className={cn("w-full border-0", sideActionClasses)}
-                  >
-                    Review {side} Order
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="confirm-panel"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-                  className="tx-glass space-y-3 rounded-xl p-3.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-[var(--tx-text)]">
-                      Confirm {side} {formatNumber(parsedQty)} {stock.symbol}
-                    </p>
-                    <Badge variant={side === "BUY" ? "gain" : "loss"} size="sm">
-                      {side}
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-[var(--tx-text-secondary)]">
-                    Estimated{" "}
-                    <span className="font-semibold tabular-nums text-[var(--tx-text)]">
-                      {formatINR(estimatedValue)}
-                    </span>
-                    . Execution price is validated and finalized by the backend at
-                    submission.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={submitting}
-                      onClick={() => setConfirming(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      disabled={submitting}
-                      onClick={() => {
-                        void handleConfirmOrder();
-                      }}
-                      className={cn("border-0", sideActionClasses)}
-                    >
-                      {submitting ? "Submitting..." : `Confirm ${side}`}
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {orderResult && (
-                <motion.div
-                  key={orderResult.order.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-2.5 rounded-xl border border-[var(--tx-gain-border)] bg-[var(--tx-gain-bg)] p-3.5 text-xs text-[var(--tx-text)]"
-                >
-                  <div className="flex items-center justify-between gap-2 font-semibold">
-                    <span className="inline-flex items-center gap-1.5 text-[var(--tx-gain)]">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Order {orderResult.order.status}
-                    </span>
-                    <span className="text-[11px] tracking-[0.04em] text-[var(--tx-text-secondary)]">
-                      {orderResult.order.orderType} · {orderResult.order.symbol}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 text-[11px] text-[var(--tx-text-secondary)]">
-                    <div className="flex justify-between">
-                      <span>Quantity</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatNumber(orderResult.order.quantity)} shares
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Execution Price</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatINR(orderResult.order.executionPrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-medium">
-                      <span>Total Amount</span>
-                      <span className="tabular-nums text-[var(--tx-text)]">
-                        {formatINR(orderResult.order.totalAmount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t border-[var(--tx-gain-border)] pt-1.5 font-medium">
-                      <span>Updated Cash</span>
-                      <span className="tabular-nums text-[var(--tx-gain)]">
-                        {formatINR(orderResult.cashBalance)}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="lg"
+              disabled={Boolean(validationError) || submitting}
+              className={cn("w-full border-0", sideActionClasses)}
+            >
+              {side} {stock.symbol}
+            </Button>
           </form>
         )}
       </CardContent>
+
+      <OrderConfirmationModal
+        isOpen={confirming}
+        side={side}
+        stock={stock}
+        quantity={parsedQty}
+        estimatedValue={estimatedValue}
+        availableCash={availableCash}
+        availableShares={availableShares}
+        submitting={submitting}
+        orderResult={orderResult}
+        sideActionClasses={sideActionClasses}
+        onClose={closeOrderModal}
+        onConfirm={() => {
+          void handleConfirmOrder();
+        }}
+      />
     </Card>
   );
 }

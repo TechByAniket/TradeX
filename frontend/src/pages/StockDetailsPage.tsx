@@ -12,6 +12,7 @@ import { Button } from "@/components/common/Button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/common/Card";
@@ -328,6 +329,119 @@ export function StockDetailsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Stored Manual NSE Reference Snapshot */}
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-4 border-b border-[var(--tx-border)] pb-4">
+          <div>
+            <CardTitle className="tx-heading-section">
+              NSE Reference Snapshot
+            </CardTitle>
+            <CardDescription>
+              Last manually fetched NSE reference metrics (separate from live
+              simulation)
+            </CardDescription>
+          </div>
+          {stock.nseQuoteFetchedAt && (
+            <Badge variant="neutral" size="sm">
+              Fetched {formatLastUpdated(stock.nseQuoteFetchedAt)}
+            </Badge>
+          )}
+        </CardHeader>
+
+        <CardContent className="pt-5">
+          {!stock.nseQuoteFetchedAt && stock.nseReferencePrice == null ? (
+            <p className="text-[13px] text-[var(--tx-text-muted)]">
+              No NSE snapshot fetched yet. Use{" "}
+              <span className="font-semibold text-[var(--tx-text-secondary)]">
+                LIVE NSE PRICES
+              </span>{" "}
+              on the Overview page to load the latest NSE reference data.
+            </p>
+          ) : (
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="space-y-1">
+                <dt className="tx-label">NSE Reference Price</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.nseReferencePrice != null
+                    ? formatINR(stock.nseReferencePrice)
+                    : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">Previous Close</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.nsePreviousClose != null
+                    ? formatINR(stock.nsePreviousClose)
+                    : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">Change / %</dt>
+                <dd
+                  className={
+                    (stock.nseChange ?? 0) > 0
+                      ? "text-sm font-semibold tabular-nums text-[var(--tx-gain)]"
+                      : (stock.nseChange ?? 0) < 0
+                        ? "text-sm font-semibold tabular-nums text-[var(--tx-loss)]"
+                        : "text-sm font-semibold tabular-nums text-[var(--tx-text)]"
+                  }
+                >
+                  {stock.nseChange != null ? (
+                    <>
+                      {stock.nseChange > 0 ? "+" : ""}
+                      {formatINR(stock.nseChange)}
+                      {stock.nsePercentChange != null
+                        ? ` (${formatPercent(stock.nsePercentChange)})`
+                        : ""}
+                    </>
+                  ) : stock.nsePercentChange != null ? (
+                    formatPercent(stock.nsePercentChange)
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">Day Range (Low – High)</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.nseDayLow != null && stock.nseDayHigh != null
+                    ? `${formatINR(stock.nseDayLow)} – ${formatINR(stock.nseDayHigh)}`
+                    : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">52W Range (Low – High)</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.nseYearLow52W != null && stock.nseYearHigh52W != null
+                    ? `${formatINR(stock.nseYearLow52W)} – ${formatINR(stock.nseYearHigh52W)}`
+                    : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">NSE Volume</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.nseVolume != null ? formatNumber(stock.nseVolume) : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">Market Cap (Cr)</dt>
+                <dd className="text-sm font-semibold tabular-nums text-[var(--tx-text)]">
+                  {stock.marketCapCr != null
+                    ? `₹${formatNumber(stock.marketCapCr)} Cr`
+                    : "—"}
+                </dd>
+              </div>
+              <div className="space-y-1">
+                <dt className="tx-label">Industry</dt>
+                <dd className="truncate text-sm font-medium text-[var(--tx-text)]">
+                  {stock.industry || "—"}
+                </dd>
+              </div>
+            </dl>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

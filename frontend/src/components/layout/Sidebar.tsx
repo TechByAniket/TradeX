@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeftRight,
-  Bookmark,
   Briefcase,
   ClipboardList,
   Compass,
@@ -28,7 +27,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "My Portfolio", to: "/portfolio", icon: Briefcase },
   { label: "Orders", to: "/orders", icon: ClipboardList },
   { label: "Transactions", to: "/transactions", icon: ArrowLeftRight },
-  { label: "Watchlist", to: "/watchlist", icon: Bookmark },
 ];
 
 interface SidebarProps {
